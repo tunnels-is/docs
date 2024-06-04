@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'Connections: Configuring the DEFAULT connection'
-description = ''
+description = 'Guide on how to configure the DEFAULT connection in advanced mode'
 icon = 'article'
 date = '2024-06-04T17:12:52+03:00'
 lastmod = '2024-06-04T17:12:52+03:00'

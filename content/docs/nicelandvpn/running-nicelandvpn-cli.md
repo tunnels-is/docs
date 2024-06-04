@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'Downloading and Running the CLI App'
-description = ''
+description = 'Guide on downloading and using the NicelandVPN CLI App'
 icon = 'article'
 date = '2024-06-04T17:45:07+03:00'
 lastmod = '2024-06-04T17:45:07+03:00'

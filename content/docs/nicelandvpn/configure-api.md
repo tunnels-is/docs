@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'API: Configuring address and port'
-description = ''
+description = 'Learn how to configure the adress and port of the API throught the NicelandVPN App'
 icon = 'article'
 date = '2024-06-04T17:40:21+03:00'
 lastmod = '2024-06-04T17:40:21+03:00'

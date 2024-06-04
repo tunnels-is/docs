@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'Enabling Two Factor Authentication'
-description = ''
+description = 'Two factor authentication is good for everyone, learn how to enable it'
 icon = 'article'
 date = '2024-06-04T17:15:19+03:00'
 lastmod = '2024-06-04T17:15:19+03:00'

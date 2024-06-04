@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'Enabling Debug and Info Logging'
-description = ''
+description = 'Learn how to enable/disable debugging and logging'
 icon = 'article'
 date = '2024-06-04T17:26:46+03:00'
 lastmod = '2024-06-04T17:26:46+03:00'

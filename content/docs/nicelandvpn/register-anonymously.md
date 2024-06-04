@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'Registering an Anonymous Account'
-description = ''
+description = 'Guide on how to register with an anonymous token'
 icon = 'article'
 date = '2024-06-04T17:36:41+03:00'
 lastmod = '2024-06-04T17:36:41+03:00'

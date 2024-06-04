@@ -1,8 +1,8 @@
 +++
 weight = 1
 title = 'Getting Started'
-description = ''
-icon = 'article'
+description = 'Quick guide to learn how to download and use NicelandVPN!'
+icon = 'rocket_launch'
 date = '2024-06-04T16:57:48+03:00'
 lastmod = '2024-06-04T16:57:48+03:00'
 draft = false

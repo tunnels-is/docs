@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'Managing Logged in Devices'
-description = ''
+description = 'Learn how to logout additional devices'
 icon = 'article'
 date = '2024-06-04T17:33:11+03:00'
 lastmod = '2024-06-04T17:33:11+03:00'

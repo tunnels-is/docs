@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'DNS: How to configure blocking'
-description = ''
+description = 'How to use and configure DNS blocking'
 icon = 'article'
 date = '2024-06-04T17:10:50+03:00'
 lastmod = '2024-06-04T17:10:50+03:00'

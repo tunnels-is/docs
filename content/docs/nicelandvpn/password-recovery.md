@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'Password Recovery'
-description = ''
+description = 'Guide on how to recover your password'
 icon = 'article'
 date = '2024-06-04T17:54:58+03:00'
 lastmod = '2024-06-04T17:54:58+03:00'

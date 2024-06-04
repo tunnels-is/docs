@@ -1,6 +1,7 @@
 +++
 weight = 999
 title = 'Resetting NicelandVPN Settings to Default'
+description = 'Learn how to reset the NicelandVPN App'
 icon = 'article'
 date = '2024-06-04T17:29:12+03:00'
 lastmod = '2024-06-04T17:29:12+03:00'

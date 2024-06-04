@@ -1,7 +1,7 @@
 +++
 weight = 999
 title = 'Enabling Advanced Mode'
-description = ''
+description = 'Learn how to turn on advanced mode'
 icon = 'article'
 date = '2024-06-04T17:17:51+03:00'
 lastmod = '2024-06-04T17:17:51+03:00'
