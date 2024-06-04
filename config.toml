@@ -5,6 +5,7 @@ title = 'My New Hugo Site'
 [params.docs]
 		darkMode = true
 		themeColor = "emerald"
+		intLinkTooltip = true
 
 [module]
     # uncomment line below for temporary local development of module,
