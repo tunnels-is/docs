@@ -1,7 +1,7 @@
 +++
 weight = 999
-title = 'DNS: How to change servers'
-description = 'Learn how to change your DNS servers throught he NicelandVPN App'
+title = 'SystemD'
+description = 'This article shows you how to set up a systemd service for nicelandvpn'
 icon = 'article'
 date = '2024-06-04T17:39:07+03:00'
 lastmod = '2024-06-04T17:39:07+03:00'
