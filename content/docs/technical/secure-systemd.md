@@ -21,6 +21,7 @@ usermod -G niceland niceland
 ```bash
 [Unit]
 Description=Niceland VPN
+Before=network-pre.target
 
 [Service]
 User=niceland
