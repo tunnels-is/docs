@@ -8,33 +8,30 @@ lastmod = '2024-06-04T17:39:07+03:00'
 draft = false
 toc = true
 +++
+# Step 1: Download Niceland VPN
 
-## Step 1: create a user
-
+# Step 2: Give binary access to network
 ```bash
-useradd -r -s /bin/bash niceland
-groupadd niceland
-usermod -G niceland niceland
+sudo setcap 'cap_net_raw,cap_net_bind_service,cap_net_admin+eip' /opt/niceland/vpn
 ```
 
 # Step 2: Add a service
+note: do not run as root!
 ```bash
 [Unit]
-Description=Niceland VPN
+Description=NicelandVPN
 Before=network-pre.target
 
+
 [Service]
-User=niceland
-Group=niceland
+User=REPLACEME
+Group=REPLACEME
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE
 WorkingDirectory=/opt/niceland/
-ExecStart=/opt/niceland/nicelandvpn
+ExecStart=/opt/niceland/vpn
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-# Step 3: Give binary access to network
-```bash
-sudo setcap CAP_NET_BIND_SERVICE=eip /opt/niceland/nicelandvpn
-```
