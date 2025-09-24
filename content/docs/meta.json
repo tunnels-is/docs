@@ -1,0 +1,11 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "quick-start",
+    "general",
+    "app-settings",
+    "server-settings",
+    "topics"
+  ]
+}

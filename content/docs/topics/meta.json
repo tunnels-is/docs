@@ -1,0 +1,15 @@
+{
+  "title": "Topics",
+  "pages": [
+    "index",
+    "cloud-and-baremetal",
+    "office-vpn",
+    "homelab",
+    "private-vpn",
+    "dns-security",
+    "iot-networks",
+    "lan-over-wan",
+    "security",
+    "anonymity"
+  ]
+}

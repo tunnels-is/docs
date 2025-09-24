@@ -1,0 +1,9 @@
+{
+  "title": "Server Settings",
+  "pages": [
+    "index",
+    "features",
+    "keys",
+    "admin-keys"
+  ]
+}
