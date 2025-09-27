@@ -4,6 +4,8 @@
     "index",
     "features",
     "keys",
-    "admin-keys"
+    "admin-keys",
+    "linux-configurations",
+    "config"
   ]
 }
