@@ -1,7 +1,6 @@
 {
   "title": "General",
   "pages": [
-    "index",
     "registering",
     "login"
   ]

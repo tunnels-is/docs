@@ -1,11 +1,11 @@
 {
   "title": "Server Settings",
   "pages": [
-    "index",
     "features",
     "keys",
     "admin-keys",
     "linux-configurations",
+    "installation",
     "config"
   ]
 }

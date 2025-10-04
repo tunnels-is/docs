@@ -1,7 +1,6 @@
 {
   "title": "Tunnel Interfaces",
   "pages": [
-    "index",
     "routing",
     "dns",
     "lan",

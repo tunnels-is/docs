@@ -3,47 +3,36 @@ title: Homelab
 description: Homelab setup and configuration
 ---
 
-## Requirements
+## Minimum Requirements
+ Will work decently for a few users but throughput will be limited
+```bash
+ - Linux 
+ - iptables installed
+ - 1 CPU core
+ - 500 MB RAM
+```
 
-- Linux
-- iptables installed
-- 1 CPU core
-- 1 GB RAM
+## Recommended Requirements
+```bash
+ - Linux 
+ - iptables installed
+ - 2-4 CPU core
+ - 2 GB RAM
+```
+
+
+## Server Installation 
+Follow [this guide](/docs/server-settings/installation) to install the server on a linux system
 
 ## Server Configuration
+Follow the [Linux server setup guide](/docs/server-settings/linux-configurations) before proceeding with the
 
-Follow the [Linux server setup guide](/docs/server-settings/linux-configurations) before proceeding with the installation.
+## Configure the home network
 
-## Installing the Server
+## Install the client
 
-1. **Download the server**
+## Connect to your home network
 
-   Download the latest release from GitHub:
-   ```bash
-   wget https://github.com/tunnels-is/tunnels/releases/download/v2.0.7/tunnels_2.0.7_Linux_amd64.tar.gz
-   ```
+## Set up custom DNS
 
-2. **Extract and place the binary**
-
-   Extract to your preferred directory (e.g., `/opt/tunnels`):
-   ```bash
-   sudo mkdir -p /opt/tunnels
-   sudo tar -xzf tunnels_2.0.7_Linux_amd64.tar.gz -C /opt/tunnels
-   ```
-
-3. **Run the server with auto-configuration**
-
-   The `--config` flag will automatically generate certificates and configuration:
-   ```bash
-   cd /opt/tunnels
-   ./tunnels --config
-   ```
-
-4. **Inspect the configuration**
-
-   Review the generated configuration file:
-   ```bash
-   cat /opt/tunnels/config.json
-   ```
-
-   For detailed configuration options, see the [server configuration guide](/docs/server-settings/config).
+## Invite your friends

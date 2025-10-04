@@ -1,7 +1,6 @@
 {
   "title": "App Settings",
   "pages": [
-    "index",
     "tunnel-interfaces",
     "dns-blocking",
     "logging"

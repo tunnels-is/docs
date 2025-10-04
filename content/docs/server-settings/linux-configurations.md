@@ -11,6 +11,13 @@ $ apt install iptables
 # Sysctl configurations (semi-required)
 ### /etc/sysctl.conf
 ```bash
+# THIS PART IS REQUIRED
+# Must match StartPort and EndPort in the server config.json
+# -----------------------------
+net.ipv4.ip_local_reserved_ports = 2000-65500
+net.ipv4.ip_local_port_range = 1024 1999
+# -----------------------------
+
 net.ipv4.tcp_rmem=8192 32768 655360
 net.ipv4.tcp_wmem=8192 32768 655360
 net.ipv4.tcp_mtu_probing=0
@@ -37,13 +44,6 @@ fs.file-max= 2097152
 
 net.ipv6.conf.default.disable_ipv6=1
 net.ipv6.conf.all.disable_ipv6=1
-
-# THIS PART IS REQUIRED
-# Must match StartPort and EndPort in the server config.json
-# -----------------------------
-net.ipv4.ip_local_reserved_ports = 2000-65500
-net.ipv4.ip_local_port_range = 1024 1999
-# -----------------------------
 
 net.ipv4.conf.all.send_redirects = 0
 net.ipv4.conf.default.send_redirects = 0
