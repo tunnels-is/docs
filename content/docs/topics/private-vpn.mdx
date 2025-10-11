@@ -3,11 +3,47 @@ title: Private VPN
 description: Private VPN setup and usage
 ---
 
-## Prequesits
- - cloud VPS
- - linux server
- - Docker on windows ?
+## Server Installation 
+Follow [this guide](/docs/server/installation) to install the server on a linux system
 
-## Configure the server
+## Server Configuration
+1. Use the [Linux server setup guide](/docs/server/linux-configurations) to configure your server.
+2. Set `LocalNetworkAccess` to `true`. This enables VPN access to all local networks.
+3. (Optional) You can turn off internet access by setting `InternetAccess` to `false`
 
-## install the servers
+:::warning
+
+Do not forget to follow the iptables setup in the server configuration if your server is not behind NAT or a software firewall
+
+:::
+
+## Install the client
+Follow [this guide](/docs/client/installation) to install the client/app
+
+## Connect to your new server
+Once the client is open, follow these steps:
+1. click the `+` icon to add your server
+2. Put the `server IP address` in the `Host` field.
+3. Add the `APIPort` to the `Port` field
+4. Uncheck `ValidateCertificate`
+
+:::tip
+
+Follow [this guide](/docs/client/installation) to enable certificate validation
+
+:::
+
+5. Login with the default user/password for administrator
+
+:::tip
+
+username: admin<br/>
+password: admin
+
+:::
+
+## Set up custom DNS
+Follow [this guide](/docs/server/dns) to set up custom DNS records for your home lab
+
+Follow [this guide](/docs/client/dns-blocking) to set up DNS Blocking
+

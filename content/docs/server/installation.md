@@ -41,6 +41,14 @@ description: Download, Extract, Run.
    ./tunnels --config
    ```
 
+:::danger
+
+The default user/pass for tunnels server is admin/admin.
+
+Do not open any ports to the server before changing the password using the password reset functionality from the client GUI
+
+:::
+
 4. **Inspect the configuration**
    ```bash
    cat /opt/tunnels/config.json

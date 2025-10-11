@@ -1,9 +1,12 @@
 ---
-title: Homelab
-description: Homelab setup and configuration
+title: Multi Network VPN
+description: Guide for setting up multiple VPN networks with a single Control server
 ---
 
-## Server Installation 
+## Control Server Installation 
+Follow [this guide](/docs/server/installation) to install the server on a linux system
+
+## VPN Server Installation 
 Follow [this guide](/docs/server/installation) to install the server on a linux system
 
 ## Server Configuration
@@ -11,32 +14,19 @@ Follow [this guide](/docs/server/installation) to install the server on a linux 
 2. Set `LocalNetworkAccess` to `true`. This enables VPN access to all local networks.
 3. (Optional) You can turn off internet access by setting `InternetAccess` to `false`
 
-## Configure Your Router
-If you want to connect to your homelab from outside of your home, you will need to open a port on your router to the configured `VPNPort` and `APIPort` in your server config.
+:::warning
 
-:::note
-
-`VPNPort` and `APIPort` can both share the same value.   
+Do not forget to follow the iptables setup in the server configuration if your server is not behind NAT or a software firewall
 
 :::
-
 
 ## Install the client
 Follow [this guide](/docs/client/installation) to install the client/app
 
-## Connect to your home network
+## Connect to your new server
 Once the client is open, follow these steps:
 1. click the `+` icon to add your server
-2. Put your `internet IP Address` in the `Host` field.
-
-:::tip
-
-You can find your internet IP Address by using curl
-```bash
-curl ipinfo.io
-```
-:::
-
+2. Put the `server IP address` in the `Host` field.
 3. Add the `APIPort` to the `Port` field
 4. Uncheck `ValidateCertificate`
 

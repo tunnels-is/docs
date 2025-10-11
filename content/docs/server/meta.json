@@ -1,11 +1,9 @@
 {
   "title": "Server",
   "pages": [
-    "features",
-    "keys",
-    "admin-keys",
     "linux-configurations",
     "installation",
-    "config"
+    "config",
+    "upgrade-downgrade"
   ]
 }

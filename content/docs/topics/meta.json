@@ -1,8 +1,7 @@
 {
   "title": "Topics",
   "pages": [
-    "cloud-and-baremetal",
-    "office-vpn",
+    "multi-network",
     "homelab",
     "private-vpn",
     "dns-security",

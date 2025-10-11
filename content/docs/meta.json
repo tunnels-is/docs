@@ -1,11 +1,10 @@
 {
   "title": "Documentation",
   "pages": [
-    "index",
     "quick-start",
-    "general",
     "client",
     "server",
-    "topics"
+    "topics",
+    "index"
   ]
 }

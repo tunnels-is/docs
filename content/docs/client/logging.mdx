@@ -2,5 +2,41 @@
 title: Logging
 description: Configure logging settings
 ---
+The client application enabled some debug logging by default, this is to help users figure out whats wrong and to help us help users.
+However, ALL logging can be turned off in the UI for both the UI (browser console) and the application itself.
 
-TODO
+**Out stance on logging is that is the user should always be able to turn it off completely, we even keep our website free of analytics and cookies.**
+
+The VPN server also has a `--silent` flag to disable all logging.
+
+## How To Disanle Logging
+When all logging options are turned off, the app will not log to file or to console.
+
+This applies to the UI as well.
+
+1. Go to `Application`
+2. Go to `General Settings`
+3. Unckeck all the logging options
+
+## Enable Debug Logging
+1. Go to `Application`
+2. Go to `General Settings`
+3. Check the logging option you want to be enabled
+
+### Logging options
+```
+ - Basic Logging
+    Enables logs for basic things like DNS queries and connecting/disconnecting
+
+ - Error Logging
+    Enables logging of all errors
+
+ - Console Logging
+    Enables logging to stdout/console.
+
+ - Debug Logging
+    Enabled more extensive logging for debug purpouses.
+
+ - Debug Mode
+    Enables javascript console logging for UI debugging.
+```
