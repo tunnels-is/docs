@@ -4,8 +4,8 @@
     "index",
     "quick-start",
     "general",
-    "app-settings",
-    "server-settings",
+    "client",
+    "server",
     "topics"
   ]
 }

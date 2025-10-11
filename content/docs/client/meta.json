@@ -1,6 +1,7 @@
 {
-  "title": "App Settings",
+  "title": "Client / App",
   "pages": [
+    "installation",
     "tunnel-interfaces",
     "dns-blocking",
     "logging"

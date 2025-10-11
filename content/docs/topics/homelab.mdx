@@ -3,35 +3,30 @@ title: Homelab
 description: Homelab setup and configuration
 ---
 
-## Minimum Requirements
- Will work decently for a few users but throughput will be limited
-```bash
- - Linux 
- - iptables installed
- - 1 CPU core
- - 500 MB RAM
-```
-
-## Recommended Requirements
-```bash
- - Linux 
- - iptables installed
- - 2-4 CPU core
- - 2 GB RAM
-```
-
-
 ## Server Installation 
-Follow [this guide](/docs/server-settings/installation) to install the server on a linux system
+Follow [this guide](/docs/server/installation) to install the server on a linux system
 
 ## Server Configuration
-Follow the [Linux server setup guide](/docs/server-settings/linux-configurations) before proceeding with the
+1. Use the [Linux server setup guide](/docs/server/linux-configurations) to configure your server.
+2. Set `LocalNetworkAccess` to `true`. This enables VPN access to all local networks.
+3. (Optional) You can turn off internet access by setting `InternetAccess` to `false`
 
-## Configure the home network
+## Configure Your Router
+If you want to connect to your homelab from outside of your home, you will need to open a port on your router to the configured `VPNPort` and `APIPort` in your server config.
+
+:::note
+
+`VPNPort` and `APIPort` can both share the same value.   
+
+:::
 
 ## Install the client
+Follow [this guide](/docs/client/installation) to install the client/app
+
 
 ## Connect to your home network
+Once the client is open, follow these steps:
+1. 
 
 ## Set up custom DNS
 

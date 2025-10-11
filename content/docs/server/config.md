@@ -48,7 +48,7 @@ description: Server config example
     "DNSServers": [],
     "SecretStore": "config",
     "AdminAPIKey": "0cd1f6c4-9b98-4bda-860c-0c04f103c84d",
-    "DBurl": "mongodb://127.0.0.1:27017",
+    "DBurl": "",
     "TwoFactorKey": "1f9890c7b1e94365ab8f65d0e3d41bb4",
     "EmailKey": "",
     "PayKey": "",
