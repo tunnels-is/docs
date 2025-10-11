@@ -48,15 +48,14 @@ net.ipv4.tcp_sack=1
 net.ipv4.tcp_congestion_control=bbr
 
 net.core.optmem_max=65536000
-net.core.rmem_max = 268435456
-net.core.rmem_default = 1048576
-net.core.wmem_max = 268435456
-net.core.wmem_default = 1048576
+net.core.rmem_max = 16000000
+net.core.rmem_default = 16000000
+net.core.wmem_max = 16000000
+net.core.wmem_default = 16000000
 net.core.netdev_max_backlog = 300000
-net.ipv4.udp_mem = 19257652 19257652 19257652
+net.ipv4.udp_mem = 524288 1048576 2097152
 net.ipv4.udp_rmem_min = 8192
 net.ipv4.udp_wmem_min = 8192
-net.core.optmem_max = 25165824
 net.ipv4.conf.all.accept_source_route = 0
 net.ipv4.conf.default.accept_source_route = 0
 
