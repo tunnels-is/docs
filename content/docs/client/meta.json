@@ -2,6 +2,7 @@
   "title": "Client / App",
   "pages": [
     "installation",
+    "config",
     "cli",
     "tunnel-interfaces",
     "dns-blocking",

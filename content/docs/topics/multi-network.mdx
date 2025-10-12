@@ -1,18 +1,211 @@
 ---
-title: Multi Network VPN
-description: Guide for setting up multiple VPN networks with a single Control server
+title: Multi-Network Setup
+description: Setting up Tunnels with separated control and VPN servers
 ---
 
-## Control Server Installation 
-Follow [this guide](/docs/server/installation) to install the server on a linux system
+## Overview
 
-## VPN Server Installation 
-Follow [this guide](/docs/server/installation) to install the server on a linux system
+This guide walks you through setting up a multi-network Tunnels deployment with a centralized authentication control server and multiple VPN servers. This architecture provides better scalability, redundancy, and geographic distribution of your VPN infrastructure.
 
-## Server Configuration
-1. Use the [Linux server setup guide](/docs/server/linux-configurations) to configure your server.
-2. Set `LocalNetworkAccess` to `true`. This enables VPN access to all local networks.
-3. (Optional) You can turn off internet access by setting `InternetAccess` to `false`
+### Architecture
+
+In this setup, you'll deploy:
+- **1 Control Server (AUTH server)**: Handles user authentication, authorization, and management
+- **Multiple VPN Servers**: Handle VPN connections and local network access
+
+The control server manages all users, devices, and groups, while VPN servers handle the actual tunnel traffic. VPN servers validate user connections by verifying signatures from the AUTH server.
+
+## Server Installation
+
+Follow [this guide](/docs/server/installation) to install the server on each Linux system (control server and VPN servers).
+
+You'll need to install the server binary on all three servers:
+- Control server at `10.10.0.2`
+- VPN server 1 at `10.10.0.3`
+- VPN server 2 at `10.11.0.3`
+
+## Control Server Setup
+
+The control server handles authentication and management but does not process VPN traffic.
+
+### 1. Generate Configuration and Certificates
+
+On your control server (10.10.0.2), run:
+
+```bash
+./server --config
+```
+
+This will:
+- Generate a `config.json` file with default settings
+- Create TLS certificates (`cert.pem` and `key.pem`)
+- Initialize a new admin user with a random password
+- Print the initial admin password (save this!)
+
+### 2. Configure the Control Server
+
+Edit the generated `config.json` to configure the AUTH server:
+
+```json
+{
+  "Features": ["AUTH", "BBOLT"],
+  "APIIP": "10.10.0.2",
+  "APIPort": "443",
+  "Hostname": "control.tunnels.local",
+  "SecretStore": "config",
+  "UserMaxConnections": 10,
+  "PingTimeoutMinutes": 5,
+  "CertPem": "./cert.pem",
+  "KeyPem": "./key.pem"
+}
+```
+
+**Key configuration points:**
+- **Features**: Only enable `AUTH` and `BBOLT` (no VPN or LAN features)
+- **APIIP/APIPort**: Set to your control server's IP and port
+- **SecretStore**: Use `"config"` to store secrets in the config file, or `"env"` to use environment variables
+
+### 3. Start the Control Server
+
+```bash
+./server
+```
+
+On first startup, you'll see the initial admin password printed in the logs:
+
+```
+ADMIN PASSWORD (change this!!): <random-password>
+```
+
+:::warning
+
+Save this password immediately! You'll need it to log in and set up two-factor authentication.
+
+:::
+
+### 4. Copy the Certificate
+
+The VPN servers need the control server's certificate to validate authentication signatures. Copy the `cert.pem` file from the control server - you'll use it as `sign.pem` on the VPN servers.
+
+```bash
+# On control server
+scp cert.pem user@10.10.0.3:/path/to/vpn-server/sign.pem
+scp cert.pem user@10.11.0.3:/path/to/vpn-server/sign.pem
+```
+
+## VPN Server Setup
+
+VPN servers handle the actual tunnel traffic and local network access. They validate user connections using signatures from the control server.
+
+### 1. Generate VPN Server Certificates
+
+On each VPN server, generate certificates:
+
+```bash
+./server --certs
+```
+
+This creates `cert.pem` and `key.pem` for the VPN server.
+
+### 2. Configure VPN Server 1 (10.10.0.3)
+
+Create `config.json` on VPN server 1:
+
+```json
+{
+  "Features": ["VPN", "LAN"],
+  "VPNIP": "10.10.0.3",
+  "VPNPort": "443",
+  "APIIP": "10.10.0.3",
+  "APIPort": "443",
+  "Hostname": "vpn1.tunnels.local",
+  "SecretStore": "config",
+  "Lan": {
+    "Tag": "lan",
+    "Network": "10.0.0.0/16"
+  },
+  "Routes": [
+    {
+      "Address": "10.0.0.0/16",
+      "Metric": "0"
+    }
+  ],
+  "SubNets": [],
+  "DisableLanFirewall": false,
+  "StartPort": 2000,
+  "EndPort": 65530,
+  "UserMaxConnections": 10,
+  "InternetAccess": true,
+  "LocalNetworkAccess": true,
+  "ServerBandwidthMbps": 1000,
+  "UserBandwidthMbps": 10,
+  "PingTimeoutMinutes": 5,
+  "DHCPTimeoutHours": 24,
+  "CertPem": "./cert.pem",
+  "KeyPem": "./key.pem",
+  "SignPem": "./sign.pem"
+}
+```
+
+**Key configuration points:**
+- **Features**: Enable `VPN` and `LAN` only (no AUTH)
+- **SignPem**: Points to the control server's certificate (copied earlier)
+- **Lan.Network**: The local network range for VPN clients
+- **LocalNetworkAccess**: Set to `true` for private network access
+- **InternetAccess**: Enable/disable internet routing through VPN
+
+### 3. Configure VPN Server 2 (10.11.0.3)
+
+Create `config.json` on VPN server 2 with similar settings, adjusting IPs:
+
+```json
+{
+  "Features": ["VPN", "LAN"],
+  "VPNIP": "10.11.0.3",
+  "VPNPort": "443",
+  "APIIP": "10.11.0.3",
+  "APIPort": "443",
+  "Hostname": "vpn2.tunnels.local",
+  "SecretStore": "config",
+  "Lan": {
+    "Tag": "lan-2",
+    "Network": "10.1.0.0/16"
+  },
+  "Routes": [
+    {
+      "Address": "10.1.0.0/16",
+      "Metric": "0"
+    }
+  ],
+  "SubNets": [],
+  "DisableLanFirewall": false,
+  "StartPort": 2000,
+  "EndPort": 65530,
+  "UserMaxConnections": 10,
+  "InternetAccess": true,
+  "LocalNetworkAccess": true,
+  "ServerBandwidthMbps": 1000,
+  "UserBandwidthMbps": 10,
+  "PingTimeoutMinutes": 5,
+  "DHCPTimeoutHours": 24,
+  "CertPem": "./cert.pem",
+  "KeyPem": "./key.pem",
+  "SignPem": "./sign.pem"
+}
+```
+
+:::tip
+
+Use different network ranges for each VPN server to avoid IP conflicts (e.g., 10.0.0.0/16 vs 10.1.0.0/16).
+
+:::
+
+### 4. Configure Linux Server Settings
+
+Follow the [Linux server setup guide](/docs/server/linux-configurations) on each VPN server to:
+- Configure IP forwarding
+- Set up iptables rules
+- Enable necessary kernel parameters
 
 :::warning
 
@@ -20,33 +213,96 @@ Do not forget to follow the iptables setup in the server configuration if your s
 
 :::
 
-## Install the client
-Follow [this guide](/docs/client/installation) to install the client/app
+### 5. Start VPN Servers
 
-## Connect to your new server
-Once the client is open, follow these steps:
-1. click the `+` icon to add your server
-2. Put the `server IP address` in the `Host` field.
-3. Add the `APIPort` to the `Port` field
-4. Uncheck `ValidateCertificate`
+Start each VPN server:
+
+```bash
+./server
+```
+
+The VPN servers will start listening for connections but won't handle authentication directly - they'll validate signatures from the control server.
+
+## Control Server Configuration
+
+Now that all servers are running, you need to register the VPN servers in the control server.
+
+### 1. Install the Client
+
+Follow [this guide](/docs/client/installation) to install the Tunnels client/app.
+
+### 2. Connect to the Control Server
+
+Once the client is open:
+1. Click the `+` icon to add your control server
+2. Put `10.10.0.2` in the `Host` field
+3. Add `443` to the `Port` field
+4. Uncheck `ValidateCertificate` (for initial setup)
 
 :::tip
 
-Follow [this guide](/docs/client/installation) to enable certificate validation
+Follow [this guide](/docs/client/installation) to enable certificate validation after initial setup
 
 :::
 
-5. Login with the default user/password for administrator
+5. Login with the admin credentials:
+   - **username**: `admin`
+   - **password**: `<initial-password-from-logs>`
 
-:::tip
+### 3. Set Up Two-Factor Authentication
 
-username: admin<br/>
-password: admin
+After logging in for the first time:
+1. Navigate to user settings
+2. Enable two-factor authentication
+3. Scan the QR code with your authenticator app
+4. Save recovery codes in a secure location
+5. Set a new admin password
+
+:::warning
+
+You must reset the initial admin password after setting up two-factor authentication!
 
 :::
 
-## Set up custom DNS
-Follow [this guide](/docs/server/dns) to set up custom DNS records for your home lab
+### 4. Create VPN Server Entries
 
-Follow [this guide](/docs/client/dns-blocking) to set up DNS Blocking
+In the Tunnels client, create server entries for your VPN servers:
 
+#### VPN Server 1
+1. Navigate to Servers → Add Server
+2. Configure:
+   - **Tag**: `vpn1`
+   - **IP**: `10.10.0.3`
+   - **Port**: `443`
+   - **Data Port**: `443`
+   - **Country**: Your location
+   - **Public Key**: Copy the contents of `cert.pem` from VPN server 1
+3. Save the server
+
+#### VPN Server 2
+1. Navigate to Servers → Add Server
+2. Configure:
+   - **Tag**: `vpn2`
+   - **IP**: `10.11.0.3`
+   - **Port**: `443`
+   - **Data Port**: `443`
+   - **Country**: Your location
+   - **Public Key**: Copy the contents of `cert.pem` from VPN server 2
+3. Save the server
+
+### Connecting to VPN Servers
+
+Users can now connect to either VPN server:
+1. Open Tunnels client
+2. Add control server (10.10.0.2:443) and log in
+3. Select a VPN server (vpn1 or vpn2)
+4. Click Connect
+
+The control server authenticates the user, and the selected VPN server validates the signed connection token.
+
+## Next Steps
+
+- [Set up custom DNS](/docs/server/dns) for your infrastructure
+- [Configure DNS blocking](/docs/client/dns-blocking) for security
+- [Implement group-based access control](/docs/topics/access-control) for users
+- [Monitor server performance](/docs/server/monitoring) and optimize
