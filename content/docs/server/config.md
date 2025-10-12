@@ -63,7 +63,6 @@ Use the clean config below for copying, the server does not support comments in 
     "SignPem": "./sign.pem", // This is the public sining cert that comes from the controller. 
     // This essentially allows the server to validate that connection attempts have been processed by the correct control server.
 
-    "DisableLanFirwall": false, // Use this to completely disable the LAN firewall
     "Hostname": "tunnels.local", // Base hostname used for DHCP assignments
     "PingTimeoutMinutes": 0, // How many minutes it takes to time out a client connection
     "DHCPTimeoutHours": 0, // How many hours until DHCP assignments are released
@@ -134,7 +133,6 @@ Use the clean config below for copying, the server does not support comments in 
         "Network": "10.0.0.0/16",
         "Nat": ""
     },
-    "DisableLanFirwall": false,
     "Routes": [
         {
             "Address": "10.0.0.0/16",
