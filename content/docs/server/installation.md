@@ -26,7 +26,7 @@ description: Download, Extract, Run.
 
 1. **Download the server**
    ```bash
-    curl -L -O $(curl -s https://api.github.com/repos/tunnels-is/tunnels/releases/latest | grep 'browser_download_url' | grep 'tunnels_.*_Linux_amd64.tar.gz' | cut -d '"' -f 4)
+    curl -L -O $(curl -s https://api.github.com/repos/tunnels-is/tunnels/releases/latest | grep 'browser_download_url' | grep 'server_.*_Linux_amd64.tar.gz' | cut -d '"' -f 4)
    ```
 
 2. **Extract and place the binary**
