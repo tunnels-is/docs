@@ -40,7 +40,7 @@ Tunnels.is supports two deployment architectures:
 
 ### Certificate Types
 
-Tunnels.is uses three distinct certificate/key pairs, stored as PEM-encoded files:
+Tunnels.is uses two certificate/key configurations, stored as PEM-encoded files:
 
 #### 1. **CertPem & KeyPem** - Server TLS Certificate and Signing Key
 - **Location**: Configured in `config.json` or environment variables
@@ -120,34 +120,6 @@ VPN Server has:
 └─ SignPem: AUTH server's public key for verification
 ```
 
-#### 3. **Hardcoded CA Certificates**
-Two root CA certificates are embedded in the codebase:
-
-**CAcert1** (valid 2024-07-05 to 2034-07-03)
-- Issued by: Tunnels EHF, Iceland
-- Purpose: Legacy server certificate validation
-- Located: `certs/ca.go:3-37`
-
-**CAcert2** (valid 2024-11-20 to 2034-11-18)
-- Issued by: Tunnels EHF, Iceland
-- Purpose: Current server certificate validation
-- Located: `certs/ca.go:39-72`
-
-**ControllerSigningCert** (valid 2024-12-01 to 2034-11-29)
-- Issued by: Tunnels EHF, Iceland
-- Purpose: Validate controller signatures on connection requests
-- Located: `certs/ca.go:74-108`
-
-**Certificate Pool Loading:**
-```go
-// certs/certs.go:32-43
-func LoadTunnelsCACertPool() (*x509.CertPool, error) {
-    pool := x509.NewCertPool()
-    pool.AppendCertsFromPEM([]byte(CAcert1))
-    pool.AppendCertsFromPEM([]byte(CAcert2))
-    return pool
-}
-```
 
 ### Certificate Generation
 
@@ -168,6 +140,39 @@ func MakeCertV2(ct CertType, certPath, keyPath string,
 - **Key Usage**: KeyEncipherment + DigitalSignature (line 219)
 - **Extended Key Usage**: ServerAuth (line 220)
 - **Self-Signed**: Acts as own CA (line 222)
+
+### Certificate Distribution
+
+Server certificates are distributed to clients through the AUTH server's database:
+
+```go
+// server/main.go:598-607
+func initializeNewServer() error {
+    keyBytes, err := os.ReadFile(c.CertPem)
+
+    return DB_CreateServer(&types.Server{
+        ID:       primitive.NewObjectID(),
+        IP:       c.VPNIP,
+        Port:     c.APIPort,
+        DataPort: c.VPNPort,
+        PubKey:   string(keyBytes),  // Certificate stored in database
+        Groups:   []primitive.ObjectID{},
+    })
+}
+```
+
+**Distribution Flow:**
+1. VPN server generates CertPem/KeyPem during initialization
+2. CertPem is stored in AUTH database's `Server.PubKey` field
+3. Client queries AUTH server for available VPN servers
+4. Client receives `Server.PubKey` containing the VPN server's certificate
+5. Client pins this certificate for all TLS connections to that VPN server
+
+**Security Model:**
+- **Trust Anchor**: AUTH server is the trust anchor (must be accessed over HTTPS)
+- **No CA Required**: Each VPN server's certificate is directly pinned by clients
+- **Distributed Architecture**: Different VPN servers can have different certificates
+- **Certificate Updates**: Updating server certificate requires database update
 
 ---
 
@@ -358,10 +363,11 @@ The VPN/LAN server verifies both the controller signature and establishes encryp
    Ensures the server response is authentic and not tampered with.
 
 **Key Security Properties:**
-- **Certificate Pinning**: Client trusts only pre-configured certificate
+- **Certificate Pinning**: Client receives and pins server's CertPem (stored in database `Server.PubKey` field)
+- **Direct Trust Model**: No certificate authorities or PKI infrastructure required
 - **Signature Verification**: Cryptographic proof of server identity
-- **No PKI Required**: Direct trust model, no certificate authority needed
-- **Quantum-Resistant**: Post-quantum keys are signed
+- **Out-of-Band Distribution**: Server certificates distributed through AUTH server database
+- **Quantum-Resistant**: Post-quantum keys are signed with pinned certificates
 
 ---
 
