@@ -25,13 +25,28 @@ The security model consists of several key components:
 
 ## Certificate Management
 
+### Architecture Overview
+
+Tunnels.is supports two deployment architectures:
+
+1. **Single Server (AUTH + VPN combined)**
+   - One server with CertPem/KeyPem
+   - PrivKey signs connection requests
+   - SignKey = PubKey (verifies own signatures)
+
+2. **Distributed (AUTH server + VPN server)**
+   - AUTH server: Has CertPem/KeyPem, signs with PrivKey
+   - VPN server: Has its own CertPem/KeyPem for TLS, plus SignPem (AUTH's public key) to verify signatures
+
 ### Certificate Types
 
 Tunnels.is uses three distinct certificate/key pairs, stored as PEM-encoded files:
 
-#### 1. **CertPem & KeyPem** - Server TLS Certificate
+#### 1. **CertPem & KeyPem** - Server TLS Certificate and Signing Key
 - **Location**: Configured in `config.json` or environment variables
-- **Purpose**: HTTPS API endpoints (controller and VPN server)
+- **Purpose**:
+  - **CertPem (public certificate)**: TLS/HTTPS for API endpoints
+  - **KeyPem (private key)**: TLS/HTTPS and signing connection requests
 - **Algorithm**: RSA-4096 or ECDSA P-521
 - **Validity**: 10 years (configurable)
 - **Generation**: `certs.MakeCertV2()` in `certs/certs.go:163-284`
@@ -41,11 +56,19 @@ Tunnels.is uses three distinct certificate/key pairs, stored as PEM-encoded file
 - Supports both RSA (4096-bit) and ECDSA (P-521 curve) algorithms
 - Certificate contains server identity (organization, IPs, domains)
 - Used for TLS 1.3 connections with X25519-ML-KEM768 hybrid key exchange
+- **PrivKey** (from KeyPem) used to sign connection approvals from AUTH server
 
 **Server Configuration:**
 ```go
 // server/main.go:300-334
-tlscert := tls.X509KeyPair(CertPem, KeyPem)
+// Load private key and public certificate
+priv, privB := crypt.LoadPrivateKey(KeyPem)
+pub, pubB := crypt.LoadPublicKey(CertPem)
+PrivKey = priv  // Used for signing connection requests
+PubKey = pub    // Public key from certificate
+
+// Create TLS certificate for HTTPS API
+tlscert := tls.X509KeyPair(pubB, privB)
 APITLSConfig = &tls.Config{
     MinVersion:       tls.VersionTLS13,
     MaxVersion:       tls.VersionTLS13,
@@ -54,25 +77,47 @@ APITLSConfig = &tls.Config{
 }
 ```
 
-#### 2. **SignPem** - Controller Signing Certificate
-- **Purpose**: Sign connection requests from controller to VPN server
-- **Used When**: AUTH and VPN features are on separate servers
-- **Algorithm**: RSA or ECDSA (matches CertPem algorithm)
-- **Hardcoded CA**: `ControllerSigningCert` in `certs/ca.go:74-108`
+#### 2. **SignPem** - Controller Public Key for Verification
+- **Purpose**: VPN server uses this to **verify** signatures from AUTH server
+- **Used When**: AUTH and VPN features are on **separate** servers
+- **Algorithm**: RSA or ECDSA public key (matches AUTH server's CertPem)
+- **Format**: Public key certificate (PEM encoded)
 
-**Purpose:**
-When the Controller (authentication server) and VPN Server are separate entities, the controller signs connection approval using SignPem, and the VPN server verifies using the hardcoded `ControllerSigningCert` public certificate.
+**Key Concept:**
+When the Controller (AUTH server) and VPN Server are separate entities:
+- **AUTH server** signs connection approvals with its **PrivKey** (from its KeyPem)
+- **VPN server** verifies signatures with **SignKey** (loaded from SignPem)
+- SignPem contains the AUTH server's **public key/certificate**
 
 **Key Loading Logic:**
 ```go
 // server/main.go:311-319
 if AUTHEnabled && VPNEnabled {
-    // Same server handles both - use same key
+    // Same server handles both - use own public key for verification
     SignKey = PubKey
 } else {
-    // Separate servers - load dedicated signing key
+    // Separate servers - load AUTH server's public key
     SignKey = crypt.LoadPublicKey(SignPem)
 }
+```
+
+**Architecture Examples:**
+
+*Single Server (AUTH + VPN):*
+```
+Server has CertPem/KeyPem
+├─ PrivKey: Signs connection requests
+└─ SignKey = PubKey: Verifies own signatures
+```
+
+*Distributed (AUTH server + VPN server):*
+```
+AUTH Server has CertPem/KeyPem
+└─ PrivKey: Signs connection requests
+
+VPN Server has:
+├─ Its own CertPem/KeyPem (for TLS)
+└─ SignPem: AUTH server's public key for verification
 ```
 
 #### 3. **Hardcoded CA Certificates**
@@ -177,34 +222,78 @@ func API_UserLogin(w http.ResponseWriter, r *http.Request)
 - **Backup Codes**: Recovery codes for account recovery
 - **Server Secret**: Loaded from config or environment
 
-### Connection Request Signing
+### Connection Request Signing (AUTH Server)
 
-After authentication, the controller signs connection requests:
+After authentication, the AUTH server signs connection requests:
+
+```go
+// server/handlers.go:1131-1217
+func API_SessionCreate(w http.ResponseWriter, r *http.Request)
+```
+
+**AUTH Server Flow:**
+1. **Receive Connection Request** (line 1134-1139)
+   ```go
+   CR := new(types.ControllerConnectRequest)
+   // Contains: UserID, ServerID, DeviceToken, EncType, RequestingPorts
+   ```
+
+2. **Authenticate User** (line 1180-1184)
+   ```go
+   user, err := authenticateUserFromEmailOrIDAndToken("", CR.UserID, CR.DeviceToken)
+   ```
+
+3. **Check Authorization** (line 1185-1196)
+   - Verify user/device is in allowed groups
+   - Check server access permissions
+
+4. **Sign Connection Request** (line 1199-1210)
+   ```go
+   SCR := new(types.SignedConnectRequest)
+   CR.Created = time.Now()
+   SCR.Payload = json.Marshal(CR)
+   SCR.Signature = crypt.SignData(SCR.Payload, PrivKey)  // AUTH server signs with its private key
+   ```
+
+   **Signature Algorithm** (`crypt/keys.go:85-105`):
+   - **RSA**: PSS padding with SHA-256, auto salt length
+   - **ECDSA**: ASN.1 encoded with SHA-256
+
+5. **Return Signed Request** (line 1212)
+   Client receives signed payload to send to VPN server
+
+### Connection Request Verification (VPN Server)
+
+The VPN server verifies the AUTH server's signature:
 
 ```go
 // server/handlers.go:25-126
 func API_AcceptUserConnections(w http.ResponseWriter, r *http.Request)
 ```
 
-**Request Flow:**
+**VPN Server Flow:**
 1. **Receive Signed Request** (line 26-31)
    ```go
    type SignedConnectRequest struct {
-       Signature       []byte
-       Payload         []byte
-       X25519PeerPub   []byte  // Client's public key
-       Mlkem1024Encap  []byte  // Post-quantum encapsulation key
+       Signature       []byte  // AUTH server's signature
+       Payload         []byte  // Connection request
+       X25519PeerPub   []byte  // Client's public key (added by client)
+       Mlkem1024Encap  []byte  // Post-quantum key (added by client)
    }
    ```
 
-2. **Verify Signature** (line 33-36)
+2. **Verify AUTH Server Signature** (line 33-36)
    ```go
    err = crypt.VerifySignature(SCR.Payload, SCR.Signature, SignKey)
    ```
 
+   **SignKey** is AUTH server's public key:
+   - Same server: `SignKey = PubKey`
+   - Distributed: `SignKey = LoadPublicKey(SignPem)`
+
    **Signature Algorithm** (`crypt/keys.go:107-125`):
-   - **RSA**: PSS padding with SHA-256, auto salt length
-   - **ECDSA**: ASN.1 encoded with SHA-256
+   - **RSA**: PSS padding verification with SHA-256
+   - **ECDSA**: ASN.1 verification with SHA-256
 
 3. **Validate Request Freshness** (line 46-49)
    ```go
@@ -228,7 +317,7 @@ func API_AcceptUserConnections(w http.ResponseWriter, r *http.Request)
    CRR.ServerHandshakeSignature = crypt.SignData(CRR.X25519Pub, PrivKey)
    ```
 
-   Server signs its public key with its private key, allowing client to verify server identity.
+   VPN server signs its public key with its own private key, allowing client to verify server identity.
 
 ---
 
@@ -607,23 +696,46 @@ func (S *SEAL) Open1(data []byte, nonce []byte, staging []byte, index []byte) ([
 ### Request Flow Diagram
 
 ```
-[Client]                [Controller]              [VPN Server]
+[Client]                [AUTH Server]            [VPN Server]
    |                          |                         |
    |--1. POST /v3/session---->|                         |
-   |   (DeviceToken, UID)     |                         |
+   |   (DeviceToken, UID,     |                         |
+   |    ServerID, EncType)    |                         |
+   |                          |                         |
+   |                    [Authenticate User]             |
+   |                    [Check Authorization]           |
+   |                    [Sign with PrivKey]             |
    |                          |                         |
    |<--2. Signed Response-----|                         |
    |   (Signature, Payload)   |                         |
+   |   [Add X25519 + MLKEM]   |                         |
    |                          |                         |
    |--3. POST /v3/connect---------------------->------->|
-   |   (SignedRequest + X25519 + MLKEM)                 |
+   |   (SignedRequest +                                 |
+   |    X25519PeerPub +                                 |
+   |    Mlkem1024Encap)                                 |
+   |                          |                         |
+   |                          |        [Verify Signature with SignKey]
+   |                          |        [Validate Freshness]
+   |                          |        [Initialize Encryption]
+   |                          |        [Sign Response with PrivKey]
    |                          |                         |
    |<--4. Server Response------------------------<------|
-   |   (X25519Pub, MLKEMCipher, Signature, Config)     |
+   |   (X25519Pub, MLKEMCipher,                         |
+   |    ServerHandshakeSignature, Config)               |
+   |                          |                         |
+   |   [Verify Server Signature]                        |
+   |   [Finalize Encryption]                            |
    |                          |                         |
    |--5. UDP Encrypted Data------------------------->---|
    |<--6. UDP Encrypted Data----------------------------|
 ```
+
+**Key Security Steps:**
+- **Step 2**: AUTH server signs with its **PrivKey** (from KeyPem)
+- **Step 3**: VPN server verifies with **SignKey** (from SignPem or PubKey)
+- **Step 4**: VPN server signs with its own **PrivKey** (from its KeyPem)
+- **Step 5**: Client verifies VPN signature with **ServerPubKey** (pinned certificate)
 
 ### Step 1: Controller Session Request
 
@@ -1192,8 +1304,10 @@ go tunnel.ReadFromServeTunnel()  // Handles incoming pings
 1. **Certificate Management**
    - Rotate certificates regularly (before 10-year expiry)
    - Store KeyPem in environment variables, not config file
-   - Use separate SignPem when running distributed architecture
+   - **Distributed Architecture**: VPN server's SignPem must contain AUTH server's public certificate
+   - **Single Server**: SignPem not needed (SignKey uses own PubKey)
    - Monitor certificate expiration dates
+   - Verify SignPem matches AUTH server's CertPem when setting up distributed deployments
 
 2. **Configuration Security**
    - Set `SecretStore: "env"` in production
