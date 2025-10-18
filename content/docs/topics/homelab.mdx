@@ -7,9 +7,12 @@ description: Homelab setup and configuration
 Follow [this guide](/docs/server/installation) to install the server on a linux system
 
 ## Server Configuration
+
+```
 1. Use the [Linux server setup guide](/docs/server/linux-configurations) to configure your server.
 2. Set `LocalNetworkAccess` to `true`. This enables VPN access to all local networks.
 3. (Optional) You can turn off internet access by setting `InternetAccess` to `false`
+```
 
 ## Configure Your Router
 If you want to connect to your homelab from outside of your home, you will need to open a port on your router to the configured `VPNPort` and `APIPort` in your server config.
@@ -25,9 +28,13 @@ If you want to connect to your homelab from outside of your home, you will need 
 Follow [this guide](/docs/client/installation) to install the client/app
 
 ## Connect to your home network
+
 Once the client is open, follow these steps:
+
+```
 1. click the `+` icon to add your server
-2. Put your `internet IP Address` in the `Host` field.
+2. Put your `internet IP Address` in the `Host` field
+```
 
 :::tip
 
@@ -37,8 +44,10 @@ curl ipinfo.io
 ```
 :::
 
+```
 3. Add the `APIPort` to the `Port` field
 4. Uncheck `ValidateCertificate`
+```
 
 :::tip
 
@@ -46,7 +55,9 @@ Follow [this guide](/docs/client/installation) to enable certificate validation
 
 :::
 
+```
 5. Login with the default user/password for administrator
+```
 
 :::tip
 

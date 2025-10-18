@@ -37,7 +37,8 @@ If you don't configure your system DNS to `127.0.0.1`, your DNS queries may leak
 
 ### How It Works
 
-During VPN reconnections, Tunnels temporarily blocks all DNS queries to prevent leaks during the transition period.<br/>
+During VPN reconnections, Tunnels temporarily blocks all DNS queries to prevent leaks during the transition period.
+
 When properly configured, DNS queries follow this secure path:
 
 ```
@@ -59,17 +60,18 @@ You can configure which upstream DNS servers Tunnels uses:
 1. Go to `DNS` in the main menu
 2. Go to `Settings`
 3. Configure your primary and backup DNS servers
+```
 
 ```
-```
 Default DNS Servers:
-- Primary: `1.1.1.1` (Cloudflare)
-- Backup: `8.8.8.8` (Google)
+- Primary: 1.1.1.1 (Cloudflare)
+- Backup: 8.8.8.8 (Google)
 ```
 
 ### Server-Side DNS Servers
 
-DNS server can be configured in the Control Server config. However, client side configurations will have priority. <br/>
+DNS server can be configured in the Control Server config. However, client side configurations will have priority.
+
 The Priority list is as follows:
 ```
 1. Tunnel-specific DNS (if configured on a specific tunnel client side)

@@ -9,28 +9,40 @@ Block lists are automatically updated every 24 hours
 
 :::
 # Set up your DNS configurations
+
 To use the Tunnels DNS server, simply configure your network settings to use `127.0.0.1` as your default DNS server
 
- - MacOS: [Click here for guides](https://www.google.com/search?q=how+to+change+dns+settings+on+macos&oq=how+to+change+dns+settings+on+macos&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQABiABDIHCAIQABiABDIHCAMQABiABDIHCAQQABiABDIHCAUQABiABDIHCAYQABiABDIKCAcQABiLAxiABDIKCAgQABiLAxiABDIHCAkQABiABNIBCDQzODBqMWo3qAIAsAIA&sourceid=chrome&ie=UTF-8)
- - Windwos: [Click here for guides](https://www.google.com/search?q=how+to+change+dns+settings+on+windows+11&oq=how+to+change+dns+settings+on+windows&gs_lcrp=EgZjaHJvbWUqBwgAEAAYgAQyBwgAEAAYgAQyBwgBEAAYgAQyCQgCEEUYORiABDIICAMQABgWGB4yCAgEEAAYFhgeMggIBRAAGBYYHjIICAYQABgWGB4yCAgHEAAYFhgeMgsICBAAGBYYHhiLAzILCAkQABgWGB4YiwPSAQg0MjAzajFqN6gCALACAA&sourceid=chrome&ie=UTF-8)
- - Linux: We recommend disabling `systemd-resolved` if enabled. [Click here for guides](https://www.google.com/search?q=how+to+change+dns+settings+on+linux&sca_esv=8c00fc1d70128356&ei=_JHqaIjvLfSxhbIP57OPmQY&ved=0ahUKEwiI3duQ1JyQAxX0WEEAHefZI2MQ4dUDCBE&uact=5&oq=how+to+change+dns+settings+on+linux&gs_lp=Egxnd3Mtd2l6LXNlcnAaAhgCIiNob3cgdG8gY2hhbmdlIGRucyBzZXR0aW5ncyBvbiBsaW51eDIFEAAYgAQyBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB5IjA9QrAZYkQ5wAXgBkAEAmAG9AaABygeqAQMwLji4AQPIAQD4AQGYAgmgAuEHwgIKEAAYsAMY1gQYR8ICBRAhGKABwgILEAAYgAQYkQIYigXCAg4QABiABBiRAhiKBRiLA8ICCBAAGIAEGIsDwgIJEAAYFhiLAxgewgIIEAAYFhgKGB6YAwCIBgGQBgiSBwMxLjigB908sgcDMC44uAffB8IHAzEuOMgHDw&sclient=gws-wiz-serp)
+```
+- MacOS: [Click here for guides](https://www.google.com/search?q=how+to+change+dns+settings+on+macos&oq=how+to+change+dns+settings+on+macos&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQABiABDIHCAIQABiABDIHCAMQABiABDIHCAQQABiABDIHCAUQABiABDIHCAYQABiABDIKCAcQABiLAxiABDIKCAgQABiLAxiABDIHCAkQABiABNIBCDQzODBqMWo3qAIAsAIA&sourceid=chrome&ie=UTF-8)
+- Windwos: [Click here for guides](https://www.google.com/search?q=how+to+change+dns+settings+on+windows+11&oq=how+to+change+dns+settings+on+windows&gs_lcrp=EgZjaHJvbWUqBwgAEAAYgAQyBwgAEAAYgAQyBwgBEAAYgAQyCQgCEEUYORiABDIICAMQABgWGB4yCAgEEAAYFhgeMggIBRAAGBYYHjIICAYQABgWGB4yCAgHEAAYFhgeMgsICBAAGBYYHhiLAzILCAkQABgWGB4YiwPSAQg0MjAzajFqN6gCALACAA&sourceid=chrome&ie=UTF-8)
+- Linux: We recommend disabling systemd-resolved if enabled. [Click here for guides](https://www.google.com/search?q=how+to+change+dns+settings+on+linux&sca_esv=8c00fc1d70128356&ei=_JHqaIjvLfSxhbIP57OPmQY&ved=0ahUKEwiI3duQ1JyQAxX0WEEAHefZI2MQ4dUDCBE&uact=5&oq=how+to+change+dns+settings+on+linux&gs_lp=Egxnd3Mtd2l6LXNlcnAaAhgCIiNob3cgdG8gY2hhbmdlIGRucyBzZXR0aW5ncyBvbiBsaW51eDIFEAAYgAQyBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB5IjA9QrAZYkQ5wAXgBkAEAmAG9AaABygeqAQMwLji4AQPIAQD4AQGYAgmgAuEHwgIKEAAYsAMY1gQYR8ICBRAhGKABwgILEAAYgAQYkQIYigXCAg4QABiABBiRAhiKBRiLA8ICCBAAGIAEGIsDwgIJEAAYFhiLAxgewgIIEAAYFhgKGB6YAwCIBgGQBgiSBwMxLjigB908sgcDMC44uAffB8IHAzEuOMgHDw&sclient=gws-wiz-serp)
+```
 
 
 # Enable DNS over HTTPS for extra security
- 1. Go to `DNS` in the main menu
- 2. Go to `Settings`
- 3. Enabled `Secure DNS`
+
+```
+1. Go to `DNS` in the main menu
+2. Go to `Settings`
+3. Enabled `Secure DNS`
+```
 
 # Enable DNS blocking
- 1. Go to `DNS` in the main menu
- 2. Go to `Block Lists`
- 3. Enabled any block lists you want
+
+```
+1. Go to `DNS` in the main menu
+2. Go to `Block Lists`
+3. Enabled any block lists you want
+```
 
 # Bring Your Own List
- 1. Go to `DNS` in the main menu
- 2. Go to `Block Lists`
- 3. Press `Create`
- 4. Enter a `URL` or `Tag`
+
+```
+1. Go to `DNS` in the main menu
+2. Go to `Block Lists`
+3. Press `Create`
+4. Enter a `URL` or `Tag`
+```
 
 :::tip
 
@@ -39,12 +51,15 @@ When a `URL` is not given for a blocklist, tunnels will look for that list in th
 :::
 
 # Create DNS Whitelists
+
 Whitelists allow specific domains to bypass all blocklists. This is useful for domains that are incorrectly blocked.
 
- 1. Go to `DNS` in the main menu
- 2. Go to `White Lists`
- 3. Press `Create`
- 4. Enter a `URL` or `Tag`
+```
+1. Go to `DNS` in the main menu
+2. Go to `White Lists`
+3. Press `Create`
+4. Enter a `URL` or `Tag`
+```
 
 :::tip
 

@@ -41,19 +41,24 @@ The control server handles authentication and signs connection approvals. VPN se
 The system uses PEM-encoded certificates and keys:
 
 #### CertPem & KeyPem - Server Identity
-- **CertPem**: Public certificate for TLS/HTTPS
-- **KeyPem**: Private key for TLS and signing connection requests
-- **Algorithms**: RSA-4096 or ECDSA P-521
-- **Validity**: 10 years (configurable)
-- **Generation**: Self-signed via `certs.MakeCertV2()` in `certs/certs.go:163-284`
+
+```
+CertPem: Public certificate for TLS/HTTPS
+KeyPem: Private key for TLS and signing connection requests
+Algorithms: RSA-4096 or ECDSA P-521
+Validity: 10 years (configurable)
+```
 
 The private key (`PrivKey`) from KeyPem is used by the control server to cryptographically sign connection approvals.
 
 #### SignPem - Control Server Verification
-- **Purpose**: VPN server verifies control server signatures
-- **Content**: control server's public key/certificate
-- **Used When**: Control and VPN are separate servers
-- **Loading**: VPN server loads this at startup via `crypt.LoadPublicKey(SignPem)` in `server/main.go:311-319`
+
+```
+Purpose: VPN server verifies control server signatures<br/>
+Content: control server's public key/certificate<br/>
+Used When: Control and VPN are separate servers<br/>
+Loading: VPN server loads this at startup via `crypt.LoadPublicKey(SignPem)` in `server/main.go:311-319`
+```
 
 In single-server mode, `SignKey = PubKey` (verifies own signatures). In distributed mode, `SignKey` is loaded from SignPem (verifies control server's signatures).
 
@@ -73,10 +78,13 @@ func initializeNewServer() error {
 ```
 
 **Distribution Flow:**
+
+```
 1. VPN server stores its CertPem in control database's `Server.PubKey` field
 2. Client queries control server for available VPN servers
 3. Client receives server certificate and pins it
 4. Client uses pinned certificate for all TLS connections
+```
 
 This eliminates the need for a certificate authority. Each VPN server's certificate is directly pinned by clients through the trusted control server.
 
@@ -140,23 +148,29 @@ Signature algorithms in `crypt/keys.go:85-125` support both schemes.
 #### Registration and Login
 
 User registration (`server/handlers.go:128-197`):
+
+```
 - Password requirements: 10-200 characters
 - Password hashing: bcrypt with cost factor 13
 - Device token: UUID-based per-device identifier
 - Trial period: Automatic 1-day trial for new users
+```
 
 User login (`server/handlers.go:256-297`):
+
+```
 1. Password verification via bcrypt comparison
 2. TOTP-based two-factor authentication
 3. Device token generation (unique per device)
 4. Sensitive data removed from response
+```
 
 #### Two-Factor Authentication
 
-- **Algorithm**: TOTP (Time-Based One-Time Password)
-- **Library**: `github.com/xlzd/gotp`
-- **Backup Codes**: Recovery codes for account access
-- **Server Secret**: Configured via `TwoFactorKey` setting
+**Algorithm**: TOTP (Time-Based One-Time Password)<br/>
+**Library**: `github.com/xlzd/gotp`<br/>
+**Backup Codes**: Recovery codes for account access<br/>
+**Server Secret**: Configured via `TwoFactorKey` setting
 
 ### Request Signing and Verification
 
@@ -212,8 +226,11 @@ func API_AcceptUserConnections(w http.ResponseWriter, r *http.Request) {
 ```
 
 `SignKey` contains the control server's public key:
-- Single server: `SignKey = PubKey` (own public key)
-- Distributed: `SignKey = LoadPublicKey(SignPem)` (control server's public key)
+
+```
+- Single server: SignKey = PubKey (own public key)
+- Distributed: SignKey = LoadPublicKey(SignPem) (control server's public key)
+```
 
 Request freshness validation prevents replay attacks by rejecting requests older than 4 minutes.
 
@@ -239,10 +256,13 @@ err = crypt.VerifySignature(
 ```
 
 **Security Properties:**
+
+```
 - Certificate pinning prevents man-in-the-middle attacks
 - No certificate authorities required (direct trust model)
 - Out-of-band certificate distribution through control database
 - Cryptographic proof of server identity via signature
+```
 
 ---
 
@@ -282,10 +302,13 @@ err = crypt.VerifySignature(
 ```
 
 **Key Security Steps:**
-- Step 2: Control server signs with its `PrivKey`
-- Step 3: VPN verifies with `SignKey` (from SignPem or own PubKey)
-- Step 4: VPN signs response with its own `PrivKey`
-- Step 4: Client verifies VPN signature with pinned `ServerPubKey`
+
+```
+- Step 2: Control server signs with its PrivKey
+- Step 3: VPN verifies with SignKey (from SignPem or own PubKey)
+- Step 4: VPN signs response with its own PrivKey
+- Step 4: Client verifies VPN signature with pinned ServerPubKey
+```
 
 ### Key Exchange
 
@@ -368,9 +391,12 @@ func (T *SocketWrapper) FinalizeClient(X25519PeerPub, Mlkem1024Cipher []byte) er
 ```
 
 Both parties now have the same final shared secret (`fss`), which includes:
+
+```
 - X25519 ECDH output (classical security)
 - ML-KEM shared secret (quantum security)
 - Both public keys (key confirmation)
+```
 
 #### Memory Cleanup
 
@@ -427,10 +453,13 @@ func (S *SEAL) Seal1(data []byte, index []byte) []byte {
 ```
 
 **Security Properties:**
+
+```
 - Unique nonce per packet (atomic counter prevents reuse)
 - Index authenticated but not encrypted (AAD)
 - Integrity and authenticity via AEAD
 - Forward secrecy (compromising keys doesn't expose past sessions)
+```
 
 #### Decryption Process
 
