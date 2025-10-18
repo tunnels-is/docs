@@ -77,6 +77,97 @@ This is a **React Router v7** documentation site built with **Fumadocs**, a mode
 - Supports Fumadocs components like `<Cards>`, `<Card>`
 - Auto-generates navigation and search indexes
 
+## ⚠️ CRITICAL: MDX Documentation Formatting Rules ⚠️
+
+**THESE FORMATTING RULES ARE MANDATORY AND MUST BE FOLLOWED FOR ALL MDX FILES IN `content/docs/`**
+
+### Required Formatting Standards
+
+**1. ALL Numbered Lists MUST Be Wrapped in Code Blocks**
+```markdown
+CORRECT:
+```
+1. Step one
+2. Step two
+3. Step three
+\```
+
+INCORRECT:
+1. Step one
+2. Step two
+3. Step three
+```
+
+**2. ALL Bullet Point Lists MUST Be Wrapped in Code Blocks**
+```markdown
+CORRECT:
+```
+- First item
+- Second item
+- Third item
+\```
+
+INCORRECT:
+- First item
+- Second item
+- Third item
+```
+
+**3. Consecutive Bold Statements MUST Use Line Breaks**
+```markdown
+CORRECT:
+**First Point:** Description here<br/>
+**Second Point:** Description here
+
+INCORRECT:
+**First Point:** Description here
+**Second Point:** Description here
+```
+
+**4. Lists Following Introductory Text MUST Have Blank Lines**
+```markdown
+CORRECT:
+Here is a list of items:
+```
+- Item one
+- Item two
+\```
+
+INCORRECT:
+Here is a list of items:
+- Item one
+- Item two
+```
+
+**5. Remove Bold Formatting Inside Code Blocks**
+```markdown
+CORRECT (inside code block):
+```
+- Feature Name: Description
+\```
+
+INCORRECT (inside code block):
+```
+- **Feature Name:** Description
+\```
+```
+
+### Examples from Real Documentation
+
+See `content/docs/topics/dns-security.mdx` for a complete reference implementation of these formatting rules.
+
+**WHY THESE RULES MATTER:**
+- Ensures consistent visual presentation across all documentation
+- Improves readability and scannability
+- Maintains professional documentation standards
+- Provides clear visual hierarchy
+
+**WHEN EDITING MDX FILES:**
+1. Always check existing formatting before making changes
+2. Apply these rules to ALL new content
+3. Fix any non-compliant formatting you encounter
+4. Reference dns-security.mdx as the formatting standard
+
 ## Build Process
 1. React Router typegen generates types
 2. TypeScript compilation with strict checking
