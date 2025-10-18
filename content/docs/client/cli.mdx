@@ -3,180 +3,496 @@ title: CLI
 description: How to use the minimal CLI version of tunnels
 ---
 
-# Client Config with comments
-:::warning
+The Tunnels.is client can run in **CLI mode** - a headless, web-UI-free mode designed for servers, IoT devices, and automated deployments.
 
-Use the clean config below for copying, the client does not support comments in the config
+## Overview
 
-:::
+The client operates in two modes:
+
+1. **UI Mode** (default) - Runs a local web server with embedded React frontend on port 7777
+2. **CLI Mode** - Headless operation configured via JSON files, no web UI
+
+When CLI mode is enabled, the application:
+- Disables the web UI/API server entirely
+- Forces console-only logging (integrates with systemd/journald)
+- Automatically connects to configured tunnels on startup
+- Uses device key authentication (no interactive login)
+
+## Command-Line Flags
+
+```bash
+./tunnels [flags]
+```
+
+### Available Flags
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--version` | Show version and exit | - |
+| `--basePath <path>` | Directory for config and log files | Executable directory |
+| `--tunnelType <type>` | Tunnel type: `default`, `strict`, or `iot` | `default` |
+| `--debug` | Enable debug logging | `false` |
+| `--requireConfig` | Exit if config file is missing (don't auto-generate) | `false` |
+
+### Examples
+
+```bash
+# Show version
+./tunnels --version
+
+# Run with custom config directory
+./tunnels --basePath /opt/tunnels
+
+# Run with IoT tunnel type (for embedded devices)
+./tunnels --tunnelType iot
+
+# Enable debug mode
+./tunnels --debug
+
+# Require existing config file
+./tunnels --requireConfig
+```
+
+## File Structure
+
+When running in CLI mode, the application creates the following structure:
+
+```
+<basePath>/
+├── tunnels.conf              # Main configuration file
+├── tunnel/                   # Tunnel configurations
+│   ├── tunnels.conf          # Default tunnel
+│   └── <name>.conf           # Additional tunnels
+├── users/                    # User auth files (UI mode only)
+├── logs/                     # Log files (if not console-only)
+│   └── YYYY-MM-DD.log
+├── blocklists/               # DNS blocklists
+└── whitelists/               # DNS whitelists
+```
+
+## Configuration
+
+### Enabling CLI Mode
+
+Add the `CLIConfig` section to your `tunnels.conf` to enable CLI mode:
+
 ```json
 {
-    "OpenUI": false, // Enable/Disable opening the UI on client start
-
-    // Control servers define the authentication and control endpoints
-    "ControlServers": [
-        {
-            "ID": "tunnels", // Unique identifier for this control server
-            "Host": "api.tunnels.is", // Control server hostname
-            "Port": "443", // Control server port
-            "CertificatePath": "", // Optional path to custom certificate for validation
-            "ValidateCertificate": true // Enable/Disable certificate validation
-        }
-    ],
-
-    "DisableBlockLists": false, // Completely disable DNS blocklist functionality
-
-    // CLI specific configuration (only used in CLI mode)
-    "CLIConfig": {
-        "ControlServerID": "tunnels", // Which control server to use from ControlServers list
-        "DeviceID": "", // Device identifier for authentication
-        "ServerID": "", // Default server to connect to
-        "SendStats": true, // Enable/Disable sending statistics to server
-        "PinVersion": false, // Lock to a specific client version
-        "SkipUpdatePrompt": false // Skip prompting for updates
-    },
-
-    // Update settings
-    "AutoDownloadUpdate": true, // Automatically download updates when available
-    "ExitPostUpdate": false, // Exit application after updating
-    "RestartPostUpdate": false, // Restart application after updating
-    "UpdateWhileConnected": false, // Allow updates while connected to VPN
-    "UpdateCheckInterval": 1440, // How often to check for updates (in minutes)
-    "DisableUpdates": false, // Completely disable update functionality
-
-    // API settings for local client API
-    "APIIP": "127.0.0.1", // IP address for the local API server
-    "APIPort": "7777", // Port for the local API server
-    "APICert": "./api.crt", // Path to API server certificate
-    "APIKey": "./api.key", // Path to API server private key
-    "APICertDomains": ["tunnels.app", "app.tunnels.is"], // Domains to include in API certificate
-    "APICertIPs": ["127.0.0.1", "0.0.0.0"], // IP addresses to include in API certificate
-    "APICertType": 0, // Certificate type (0 = self-signed, 1 = Let's Encrypt)
-
-    // Generic settings
-    "DisableDNS": false, // Completely disable DNS functionality
-
-    // Logging settings
-    "LogBlockedDomains": false, // Log domains that are blocked by DNS blocklists
-    "LogAllDomains": false, // Log all DNS queries (generates large logs)
-    "DebugLogging": false, // Enable debug level logging
-    "DeepDebugLoggin": false, // Enable very verbose debug logging
-    "ConsoleLogging": false, // Output logs to console
-    "InfoLogging": true, // Enable info level logging
-    "ErrorLogging": true, // Enable error level logging
-    "ConsoleLogOnly": false, // Only log to console, not to file
-    "ConnectionTracer": false, // Enable detailed connection tracing (for debugging)
-
-    // DNS settings
-    "DNS1Default": "1.1.1.1", // Primary default DNS server
-    "DNS2Default": "8.8.8.8", // Secondary default DNS server
-    "DNSOverHTTPS": false, // Use DNS over HTTPS for upstream queries
-    "DNSstats": false, // Enable DNS statistics collection
-    "DNSServerIP": "127.0.0.1", // IP address for local DNS server
-    "DNSServerPort": "53", // Port for local DNS server
-
-    // DNS Blocklists - Protect against malicious domains
-    "DNSBlockLists": [
-        {
-            "Tag": "Ads", // Identifier for this blocklist
-            "URL": "https://raw.githubusercontent.com/n00bady/bluam/master/dns/merged/ads", // URL to download blocklist from
-            "Enabled": true, // Enable/Disable this blocklist
-            "Count": 0, // Number of domains in list (auto-populated)
-            "LastDownload": "0001-01-01T00:00:00Z" // Last download time (auto-populated)
-        },
-        {
-            "Tag": "AdultContent",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/adult",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "CryptoCurrency",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/crypto",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Drugs",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/drugs",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "FakeNews",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/fakenews",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Fraud",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/fraud",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Gambling",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/gambling",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Malware",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/malware",
-            "Enabled": true, // Highly recommended to keep enabled
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "SocialMedia",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/socialmedia",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Surveillance",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/surveillance",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        }
-    ],
-
-    // DNS Whitelists - Domains that should never be blocked
-    "DNSWhiteLists": [
-        {
-            "Tag": "mywhitelist", // Custom whitelist identifier
-            "URL": "", // Optional URL to download whitelist from (leave empty for local file)
-            "Enabled": true,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        }
-    ],
-
-    // Custom DNS records - Override DNS resolution for specific domains
-    "DNSRecords": [
-        {
-            "Domain": "example.com",
-            "Wildcard": false, // Allow subdomain matching (*.example.com)
-            "IP": ["10.0.0.100"], // A record responses
-            "TXT": [], // TXT record responses
-            "CNAME": "" // CNAME record response
-        }
-    ]
+  "CLIConfig": {
+    "ControlServerID": "tunnels",
+    "DeviceID": "your-device-key-here",
+    "ServerID": "your-server-id-here",
+    "SendStats": true,
+    "PinVersion": false,
+    "SkipUpdatePrompt": true
+  }
 }
 ```
 
+### CLIConfig Fields
 
+| Field | Type | Description |
+|-------|------|-------------|
+| `ControlServerID` | string | ID of the control server (must match a `ControlServers` entry) |
+| `DeviceID` | string | Device key for authentication (obtain from Tunnels.is) |
+| `ServerID` | string | VPN server ID to connect to |
+| `SendStats` | bool | Send CPU/RAM/DISK stats to server for monitoring |
+| `PinVersion` | bool | Pin client to specific version from control server |
+| `SkipUpdatePrompt` | bool | Skip update prompts for automated deployments |
 
+### Getting DeviceID and ServerID
 
-# Clean config for copying
+To use CLI mode, you need:
+
+1. **DeviceID (Device Key)**: Created via the Tunnels.is API or web interface - acts as your authentication credential
+2. **ServerID**: VPN server ID from your Tunnels.is account (MongoDB ObjectID format)
+
+**Typical workflow**:
+1. Register account on Tunnels.is
+2. Create a device through API or web interface
+3. Obtain `DeviceKey` from device creation response
+4. Select target `ServerID` from available servers in your account
+5. Add both to the `CLIConfig` section
+
+### Complete CLI Configuration Example
+
+```json
+{
+  "OpenUI": false,
+  "ControlServers": [
+    {
+      "ID": "tunnels",
+      "Host": "api.tunnels.is",
+      "Port": "443",
+      "CertificatePath": "",
+      "ValidateCertificate": true
+    }
+  ],
+  "CLIConfig": {
+    "ControlServerID": "tunnels",
+    "DeviceID": "your-device-key-here",
+    "ServerID": "your-server-id-here",
+    "SendStats": true,
+    "PinVersion": false,
+    "SkipUpdatePrompt": true
+  },
+  "DisableBlockLists": false,
+  "AutoDownloadUpdate": false,
+  "DisableUpdates": true,
+  "ConsoleLogOnly": true,
+  "DebugLogging": false,
+  "InfoLogging": true,
+  "ErrorLogging": true,
+  "DNS1Default": "1.1.1.1",
+  "DNS2Default": "8.8.8.8",
+  "DNSServerIP": "127.0.0.1",
+  "DNSServerPort": "53"
+}
+```
+
+## Tunnel Configuration
+
+Create a tunnel config at `<basePath>/tunnel/tunnels.conf`:
+
+```json
+{
+  "ServerID": "your-server-id",
+  "WindowsGUID": "{GENERATED-GUID}",
+  "DNSBlocking": true,
+  "LocalhostNat": false,
+  "AutoReconnect": true,
+  "AutoConnect": true,
+  "RequestVPNPorts": true,
+  "KillSwitch": true,
+  "EncryptionType": "chacha20",
+  "TxQueueLen": 2000,
+  "MTU": 1420,
+  "IFName": "tunnels",
+  "Tag": "tunnels",
+  "EnableDefaultRoute": true,
+  "DisableFirewall": false
+}
+```
+
+### Key Tunnel Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ServerID` | string | Server to connect to (must match `CLIConfig.ServerID`) |
+| `AutoConnect` | bool | **Required for CLI** - Auto-connect on startup |
+| `AutoReconnect` | bool | Automatically reconnect if connection drops |
+| `Tag` | string | Unique identifier for this tunnel |
+| `IFName` | string | Network interface name (e.g., `tun0`) |
+| `MTU` | int | Maximum transmission unit (1420 recommended) |
+| `TxQueueLen` | int | TX queue length (2000 default) |
+| `EnableDefaultRoute` | bool | Route all traffic through VPN |
+| `KillSwitch` | bool | Block internet if VPN disconnects |
+| `RequestVPNPorts` | bool | Request port range from server for NAT |
+| `DNSBlocking` | bool | Enable DNS-based blocking |
+| `EncryptionType` | string | `chacha20` or `aes256gcm` |
+
+## Tunnel Types
+
+Use the `--tunnelType` flag to auto-generate appropriate tunnel configurations:
+
+### Default Tunnel (`default`)
+
+Standard VPN usage - routes all traffic through VPN.
+
+```bash
+./tunnels --tunnelType default
+```
+
+**Configuration**:
+- `EnableDefaultRoute: true` - Routes all traffic
+- `RequestVPNPorts: true` - Enables port forwarding
+- `MTU: 1420`
+
+### IoT Tunnel (`iot`)
+
+Lightweight mode for IoT and embedded devices.
+
+```bash
+./tunnels --tunnelType iot
+```
+
+**Configuration**:
+- `EnableDefaultRoute: false` - LAN access only, no default route
+- `RequestVPNPorts: false` - No port forwarding
+- `LocalhostNat: true` - NAT localhost traffic
+- `AutoConnect: true` - Auto-start on boot
+- `MTU: 1320` - Lower MTU for 5G/mobile networks
+
+### Strict Tunnel (`strict`)
+
+Reserved for future implementation.
+
+## Running the Client
+
+### Basic Startup
+
+```bash
+# Build the client
+cd cmd/main
+go build -o tunnels .
+
+# Create config directory
+mkdir -p /opt/tunnels
+
+# Create configuration
+nano /opt/tunnels/tunnels.conf
+# (Add CLIConfig section with your DeviceID and ServerID)
+
+# Run in CLI mode
+./tunnels --basePath /opt/tunnels
+```
+
+### Linux systemd Service
+
+Create `/etc/systemd/system/tunnels.service`:
+
+```ini
+[Unit]
+Description=Tunnels VPN Client
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/tunnels
+ExecStart=/opt/tunnels/tunnels --basePath /opt/tunnels
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable tunnels
+sudo systemctl start tunnels
+
+# View logs
+sudo journalctl -u tunnels -f
+```
+
+## Permissions Requirements
+
+### Linux (Recommended)
+
+Use capabilities instead of running as root:
+
+```bash
+# Build
+go build -o tunnels .
+
+# Grant network capabilities
+sudo setcap 'cap_net_raw,cap_net_bind_service,cap_net_admin+eip' ./tunnels
+
+# Run as regular user
+./tunnels --basePath /opt/tunnels
+```
+
+### macOS
+
+Requires sudo:
+
+```bash
+sudo ./tunnels --basePath /opt/tunnels
+```
+
+### Windows
+
+Must run as Administrator:
+
+```powershell
+.\tunnels.exe --basePath C:\tunnels
+```
+
+## CLI-Specific Features
+
+### Auto-Connection
+
+When `CLIConfig` is present, the client:
+1. Scans all tunnel configurations in `<basePath>/tunnel/`
+2. Finds tunnels with `AutoConnect: true`
+3. Automatically establishes connections using device key authentication
+4. Runs connection checks every 30 seconds
+
+### Statistics Reporting
+
+If `CLIConfig.SendStats: true`:
+- Client sends CPU, RAM, and disk usage to server every 10 seconds
+- Server can monitor device health remotely
+- Useful for IoT device fleet management
+
+### Version Pinning
+
+If `CLIConfig.PinVersion: true`:
+- Client checks control server for pinned version
+- Downloads and installs specific version automatically
+- Prevents unexpected updates in production environments
+
+### Console-Only Logging
+
+When `CLIConfig` is set:
+- Logs go to stdout/stderr by default
+- No log files created (unless `ConsoleLogOnly: false`)
+- Integrates seamlessly with syslog/journald
+
+## Example Usage Patterns
+
+### IoT Device (Raspberry Pi)
+
+```bash
+# Cross-compile for ARM
+GOOS=linux GOARCH=arm GOARM=7 go build -o tunnels .
+
+# Copy to Pi and run
+scp tunnels pi@raspberrypi:/opt/tunnels/
+ssh pi@raspberrypi
+sudo /opt/tunnels/tunnels --basePath /opt/tunnels --tunnelType iot
+```
+
+**Config** (`/opt/tunnels/tunnels.conf`):
+
+```json
+{
+  "CLIConfig": {
+    "ControlServerID": "tunnels",
+    "DeviceID": "raspberry-pi-device-key",
+    "ServerID": "home-server-id",
+    "SendStats": true,
+    "PinVersion": true,
+    "SkipUpdatePrompt": true
+  },
+  "ConsoleLogOnly": true,
+  "DisableUpdates": false,
+  "DisableDNS": true,
+  "DebugLogging": false
+}
+```
+
+### Headless Server
+
+```bash
+./tunnels --basePath /var/lib/tunnels --requireConfig
+```
+
+**Config** (`/var/lib/tunnels/tunnels.conf`):
+
+```json
+{
+  "CLIConfig": {
+    "ControlServerID": "tunnels",
+    "DeviceID": "server-device-key",
+    "ServerID": "vpn-server-id",
+    "SendStats": false,
+    "PinVersion": false,
+    "SkipUpdatePrompt": true
+  },
+  "ConsoleLogOnly": true,
+  "DisableUpdates": true,
+  "DebugLogging": false,
+  "InfoLogging": true,
+  "ErrorLogging": true
+}
+```
+
+### Docker Container
+
+```dockerfile
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+COPY . .
+RUN go build -o tunnels ./cmd/main
+
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates iptables
+
+COPY --from=builder /app/tunnels /usr/local/bin/tunnels
+COPY tunnels.conf /etc/tunnels/tunnels.conf
+
+RUN setcap 'cap_net_raw,cap_net_bind_service,cap_net_admin+eip' /usr/local/bin/tunnels
+
+CMD ["/usr/local/bin/tunnels", "--basePath", "/etc/tunnels"]
+```
+
+## Monitoring and Debugging
+
+### View Logs
+
+```bash
+# If using systemd
+journalctl -u tunnels -f
+
+# If using console logging
+./tunnels --debug --basePath /opt/tunnels 2>&1 | tee /var/log/tunnels.log
+```
+
+### Debug Configuration
+
+Enable detailed logging:
+
+```json
+{
+  "DebugLogging": true,
+  "DeepDebugLoggin": true,
+  "ConnectionTracer": true,
+  "ConsoleLogOnly": true,
+  "LogBlockedDomains": true,
+  "LogAllDomains": false,
+  "DNSstats": true
+}
+```
+
+### Common Issues
+
+**Connection fails to establish**:
+- Verify `DeviceID` and `ServerID` are correct
+- Check `AutoConnect: true` in tunnel config
+- Review logs for authentication errors
+
+**No logs appearing**:
+- Ensure `ConsoleLogOnly: true` for CLI mode
+- Check `InfoLogging: true` and `ErrorLogging: true`
+- Use `--debug` flag for verbose output
+
+**Permission denied errors**:
+- Linux: Set capabilities with `setcap` or run as root
+- macOS/Windows: Run with elevated privileges
+
+## Differences from UI Mode
+
+| Feature | UI Mode | CLI Mode |
+|---------|---------|----------|
+| Web UI | Enabled on port 7777 | Disabled |
+| Authentication | User/Device tokens, 2FA | Device key only |
+| Configuration | Web UI + JSON files | JSON files only |
+| Logging | Files + console | Console only (default) |
+| Auto-connect | Manual via UI | Automatic on startup |
+| Updates | Interactive prompts | Silent or disabled |
+| Monitoring | Web dashboard | Logs + stats API |
+
+## Use Cases
+
+CLI mode is ideal for:
+
+- **IoT Devices**: Raspberry Pi, embedded systems, sensors
+- **Servers**: Headless cloud/on-premise servers
+- **Containers**: Docker, Kubernetes deployments
+- **Automated Deployments**: Ansible, Terraform, systemd
+- **Enterprise**: Centrally managed VPN client fleet
+- **Edge Computing**: Remote devices with limited resources
+
+## Reference: Clean Config for Copying
 ```json
 {
     "OpenUI": false,
