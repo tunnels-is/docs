@@ -12,20 +12,20 @@ $ apt install iptables
 This is only needed for cloud servers with no software firewalls
 ```md
 # Clear out all iptable rules
-iptables -F
+`iptables -F`
 # Drop packet fowarding
-iptables -P FORWARD DROP
+`iptables -P FORWARD DROP`
 # Allow all outoing packets
-iptables -P OUTPUT ACCEPT
-# Enable ssh access
-iptables -I INPUT -p tcp --dport 22 -j ACCEPT
+`iptables -P OUTPUT ACCEPT`
+# Enable `SSH` access
+`iptables -I INPUT -p tcp --dport 22 -j ACCEPT`
 # Enable connection tracking
-iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-# Open traffic to the API and VPN ports
-iptables -I INPUT -p tcp --dport 443 -j ACCEPT
-iptables -I INPUT -p udp --dport 444 -j ACCEPT
+`iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT`
+# Open traffic to the `API` and `VPN` ports
+`iptables -I INPUT -p tcp --dport 443 -j ACCEPT`
+`iptables -I INPUT -p udp --dport 444 -j ACCEPT`
 # Close the server off from incomming packets
-iptables -P INPUT DROP
+`iptables -P INPUT DROP`
 ```
 
 # Sysctl configurations (semi-required)

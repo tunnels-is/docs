@@ -9,17 +9,17 @@ description: Download, Extract, Run.
  Will work decently for a few users but throughput will be limited
 ```md
  - Linux
- - iptables installed
- - 1 CPU core
- - 500 MB RAM
+ - `iptables` installed
+ - 1 `CPU` core
+ - 500 `MB` `RAM`
 ```
 
 ## Recommended Requirements
 ```md
  - Linux
- - iptables installed
- - 2-4 CPU core
- - 2 GB RAM
+ - `iptables` installed
+ - 2-4 `CPU` core
+ - 2 `GB` `RAM`
 ```
 
 ## Installing the server
