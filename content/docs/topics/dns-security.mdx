@@ -7,26 +7,27 @@ description: Comprehensive guide to managing DNS security in Tunnels
 
 Tunnels provides comprehensive DNS security features to protect your privacy, block unwanted content, and prevent DNS leaks. This guide covers all aspects of DNS security management.
 
-## Overview
+# Overview
 
 The Tunnels client includes a built-in DNS server that runs locally on `127.0.0.1:53`. This local DNS server provides:
 
+```
 - DNS leak prevention
 - Content filtering via blocklists and whitelists
 - DNS over HTTPS (DoH) support
 - Custom DNS record resolution
 - Statistics and monitoring
+```
 
-## Preventing DNS Leaks
+# Preventing DNS Leaks
 
-DNS leaks occur when DNS queries bypass your VPN tunnel and go directly to your ISP's DNS servers, exposing your browsing activity.
+DNS leaks occur when DNS queries bypass your VPN tunnel and go directly to your ISP's DNS servers, exposing your activity.
 
-### Required Configuration
-
-To prevent DNS leaks when connected to Tunnels VPN:
-
+### Prevent Leaks Using Tunnels
+```
 1. Set your system's default DNS server to `127.0.0.1`
 2. The Tunnels client will handle all DNS resolution securely
+```
 
 :::warning
 
@@ -36,63 +37,72 @@ If you don't configure your system DNS to `127.0.0.1`, your DNS queries may leak
 
 ### How It Works
 
+During VPN reconnections, Tunnels temporarily blocks all DNS queries to prevent leaks during the transition period.<br/>
 When properly configured, DNS queries follow this secure path:
 
+```
 1. Your application makes a DNS query → `127.0.0.1:53`
 2. Tunnels DNS server receives the query
 3. Query is checked against whitelists and blocklists
 4. If connected to VPN: Query is routed through the encrypted VPN tunnel
 5. Response is cached and returned to your application
+```
 
-During VPN reconnections, Tunnels temporarily blocks all DNS queries to prevent leaks during the transition period.
 
-## DNS Server Configuration
+# DNS Server Configuration
 
 ### Client-Side DNS Servers
 
 You can configure which upstream DNS servers Tunnels uses:
 
+```
 1. Go to `DNS` in the main menu
 2. Go to `Settings`
 3. Configure your primary and backup DNS servers
 
-**Default DNS Servers:**
+```
+```
+Default DNS Servers:
 - Primary: `1.1.1.1` (Cloudflare)
 - Backup: `8.8.8.8` (Google)
-
-The client automatically falls back to the backup DNS if the primary fails.
+```
 
 ### Server-Side DNS Servers
 
-The Tunnels VPN server can provide DNS servers to clients. The priority order is:
+DNS server can be configured in the Control Server config. However, client side configurations will have priority. <br/>
+The Priority list is as follows:
+```
+1. Tunnel-specific DNS (if configured on a specific tunnel client side)
+2. Server-provided DNS (from the VPN server)
+3. Client default DNS (your configured fallback)
+```
 
-1. **Tunnel-specific DNS** (if configured on a specific tunnel)
-2. **Server-provided DNS** (from the VPN server)
-3. **Client default DNS** (your configured fallback)
 
-This allows VPN servers to provide optimized or region-specific DNS servers while giving clients the flexibility to override them.
-
-## DNS over HTTPS (DoH)
+# DNS over HTTPS (DoH)
 
 DNS over HTTPS encrypts your DNS queries, preventing ISPs and network administrators from monitoring your DNS traffic.
 
 ### Enable DoH
 
+```
 1. Go to `DNS` in the main menu
 2. Go to `Settings`
 3. Enable `Secure DNS`
+```
 
 ### How It Works
 
 When DoH is enabled:
+```
 - DNS queries are converted to HTTPS requests
 - Queries are sent to `/dns-query` endpoint on your configured DNS servers
 - Responses are received over encrypted HTTPS connection
 - Compatible with Cloudflare (1.1.1.1), Google (8.8.8.8), and other DoH providers
+```
 
 DoH adds an extra layer of privacy protection even when not connected to the VPN.
 
-## Content Filtering
+# Content Filtering
 
 ### DNS Blocklists
 
@@ -101,17 +111,18 @@ Blocklists allow you to block entire categories of content by preventing DNS res
 #### Default Blocklists
 
 Tunnels provides 10 default blocklist categories:
-
-- **Ads** - Advertising and tracking domains
-- **Adult Content** - Adult websites
-- **Cryptocurrency** - Crypto mining and related sites
-- **Drugs** - Drug-related content
-- **Fake News** - Known misinformation sources
-- **Fraud** - Phishing and scam sites
-- **Gambling** - Online gambling sites
-- **Malware** - Known malicious domains
-- **Social Media** - Social networking platforms
-- **Surveillance** - Tracking and surveillance services
+```
+- Ads - Advertising and tracking domains
+- Adult Content - Adult websites
+- Cryptocurrency - Crypto mining and related sites
+- Drugs - Drug-related content
+- Fake News - Known misinformation sources
+- Fraud - Phishing and scam sites
+- Gambling - Online gambling sites
+- Malware - Known malicious domains
+- Social Media - Social networking platforms
+- Surveillance - Tracking and surveillance services
+```
 
 Lists are automatically updated every 24 hours from the [bluam repository](https://github.com/n00bady/bluam).
 
@@ -119,12 +130,14 @@ Lists are automatically updated every 24 hours from the [bluam repository](https
 
 You can add your own blocklists:
 
+```
 1. Go to `DNS` in the main menu
 2. Go to `Block Lists`
 3. Press `Create`
 4. Enter a `URL` or `Tag`
+```
 
-**URL Format:** Plain text file with one domain per line
+**URL Format:** Plain text file with one domain per line<br/>
 **Local Lists:** If no URL is provided, place your list in the `blocklists/` directory with the tag name as the filename
 
 ### DNS Whitelists
@@ -135,39 +148,48 @@ Whitelists allow specific domains to bypass all blocklists. This is critical for
 
 #### Create Whitelists
 
+```
 1. Go to `DNS` in the main menu
 2. Go to `White Lists`
 3. Press `Create`
 4. Enter a `URL` or `Tag`
+```
 
 **Local Lists:** If no URL is provided, place your list in the `whitelists/` directory with the tag name as the filename
 
 ### Managing Lists
 
 Both blocklists and whitelists can be:
+```
 - Enabled or disabled without deleting
 - Updated automatically from remote URLs
 - Managed locally from the filesystem
 - Viewed with domain counts in the UI
+```
 
-## Custom DNS Records
+# Custom DNS Records
 
 Custom DNS records allow you to override DNS resolution for specific domains. This is useful for:
-
+```
 - Resolving internal services
 - Development and testing environments
 - Privacy-focused local resolution
+```
 
 ### Create Custom DNS Records
 
+```
 1. Go to `DNS` in the main menu
 2. Go to `DNS Records`
 3. Add your custom records
+```
 
 **Supported Record Types:**
-- **A Records:** Map domains to IP addresses
-- **TXT Records:** Store text information
-- **Wildcard Matching:** Match all subdomains with wildcard support
+```
+- A Records: Map domains to IP addresses
+- TXT Records: Store text information
+- Wildcard Matching: Match all subdomains with wildcard support
+```
 
 Custom DNS records are checked before upstream DNS resolution, giving them higher priority.
 
@@ -175,11 +197,13 @@ Custom DNS records are checked before upstream DNS resolution, giving them highe
 
 When resolving a domain, Tunnels checks in this order:
 
+```
 1. Whitelist (if matched, skip blocklist check)
 2. Blocklist (if matched, block the query)
 3. Custom DNS records (server or client provided)
 4. DNS cache (if valid TTL remains)
 5. Upstream DNS resolution (via VPN tunnel or DoH)
+```
 
 ## Statistics and Monitoring
 
@@ -187,24 +211,30 @@ Track DNS queries and blocked domains for monitoring and debugging.
 
 ### Enable DNS Statistics
 
+```
 1. Go to `DNS` in the main menu
 2. Go to `Settings`
 3. Enable statistics:
-   - **Log Blocked Domains:** Track only blocked queries
-   - **Log All Domains:** Track all DNS queries
-   - **Statistics:** View detailed DNS statistics
+   - Log Blocked Domains: Track only blocked queries
+   - Log All Domains: Track all DNS queries
+   - Statistics: View detailed DNS statistics
+```
 
 ### View Statistics
 
 Go to `DNS` in the main menu and select:
-- **Blocked Domains:** View all blocked DNS queries with timestamps
-- **Resolved Domains:** View all successful DNS resolutions
+```
+- Blocked Domains: View all blocked DNS queries with timestamps
+- Resolved Domains: View all successful DNS resolutions
+```
 
 Statistics include:
+```
 - Query counts
 - First and last seen timestamps
 - DNS answers (IP addresses)
 - Blocking reasons
+```
 
 :::tip
 
@@ -217,49 +247,61 @@ For privacy, you can disable logging while still using blocklists and whitelists
 Tunnels caches DNS responses to improve performance and reduce upstream queries.
 
 **Cache Behavior:**
+```
 - Respects TTL values from DNS responses
 - Automatically expires stale entries
 - Cleans cache every 30 seconds
 - Cache key: domain + query type
+```
 
 Caching reduces query latency and minimizes DNS leak opportunities by reducing the number of upstream queries.
 
 ## Security Best Practices
 
-1. **Always set system DNS to 127.0.0.1** to prevent DNS leaks
-2. **Enable DNS over HTTPS** for additional privacy protection
-3. **Use default blocklists** for basic ad and malware protection
-4. **Create whitelists** for legitimate domains that get blocked
-5. **Monitor statistics** to identify suspicious DNS activity
-6. **Keep blocklists updated** (automatic by default)
-7. **Use tunnel-specific DNS** when connecting to region-specific services
+```
+1. Always set system DNS to 127.0.0.1 to prevent DNS leaks
+2. Enable DNS over HTTPS for additional privacy protection
+3. Use default blocklists for basic ad and malware protection
+4. Create whitelists for legitimate domains that get blocked
+5. Monitor statistics to identify suspicious DNS activity
+6. Keep blocklists updated (automatic by default)
+7. Use tunnel-specific DNS when connecting to region-specific services
+```
 
 ## Troubleshooting
 
 ### Domain Not Resolving
 
+```
 1. Check if domain is on a blocklist (view Blocked Domains statistics)
 2. Add domain to whitelist if incorrectly blocked
 3. Verify DNS servers are reachable
 4. Check DNS cache (wait 30 seconds for cache to expire)
+```
 
 ### DNS Leaks Detected
 
+```
 1. Verify system DNS is set to `127.0.0.1`
 2. Restart network services after changing DNS settings
-3. Test DNS leak at [dnsleaktest.com](https://dnsleaktest.com)
+3. Test DNS leak at dnsleaktest.com
 4. Ensure VPN is connected before making DNS queries
+```
 
 ### Blocklists Not Updating
 
+```
 1. Check internet connectivity
 2. Verify blocklist URLs are accessible
 3. Check logs for download errors
 4. Manually trigger update by toggling list off and on
+```
 
 ### Performance Issues
 
+```
 1. Reduce number of enabled blocklists (each list adds lookup overhead)
 2. Disable DNS statistics if not needed
 3. Use DoH only when privacy is critical (adds latency)
 4. Check DNS cache hit rate in statistics
+```
