@@ -37,8 +37,7 @@ If you don't configure your system DNS to `127.0.0.1`, your DNS queries may leak
 
 ### How It Works
 
-During VPN reconnections, Tunnels temporarily blocks all DNS queries to prevent leaks during the transition period.
-
+During VPN reconnections, Tunnels temporarily blocks all DNS queries to prevent leaks during the transition period.<br/>
 When properly configured, DNS queries follow this secure path:
 
 ```
@@ -70,8 +69,7 @@ Default DNS Servers:
 
 ### Server-Side DNS Servers
 
-DNS server can be configured in the Control Server config. However, client side configurations will have priority.
-
+DNS server can be configured in the Control Server config. However, client side configurations will have priority.<br/>
 The Priority list is as follows:
 ```
 1. Tunnel-specific DNS (if configured on a specific tunnel client side)
@@ -144,8 +142,7 @@ You can add your own blocklists:
 
 ### DNS Whitelists
 
-Whitelists allow specific domains to bypass all blocklists. This is critical for preventing legitimate services from being blocked.
-
+Whitelists allow specific domains to bypass all blocklists. This is critical for preventing legitimate services from being blocked.<br/>
 **Whitelist Priority:** Whitelisted domains bypass ALL blocklists, regardless of whether they appear on any blocklist.
 
 #### Create Whitelists
