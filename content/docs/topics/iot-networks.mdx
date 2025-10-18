@@ -11,7 +11,7 @@ This guide walks you through setting up a multi-network Tunnels deployment with 
 
 In this setup, you'll deploy:
 
-```
+```md
 - 1 Control Server (AUTH server): Handles user authentication, authorization, and management
 - Multiple VPN Servers: Handle VPN connections and local network access
 ```
@@ -24,7 +24,7 @@ Follow [this guide](/docs/server/installation) to install the server on each Lin
 
 You'll need to install the server binary on all three servers:
 
-```
+```md
 - Control server at 10.10.0.2
 - VPN server 1 at 10.10.0.3
 - VPN server 2 at 10.11.0.3
@@ -44,7 +44,7 @@ On your control server (10.10.0.2), run:
 
 This will:
 
-```
+```md
 - Generate a config.json file with default settings
 - Create TLS certificates (cert.pem and key.pem)
 - Initialize a new admin user with a random password
@@ -71,7 +71,7 @@ Edit the generated `config.json` to configure the control server:
 
 **Key configuration points:**
 
-```
+```md
 - Features: Only enable AUTH and BBOLT (no VPN or LAN features)
 - APIIP/APIPort: Set to your control server's IP and port
 - SecretStore: Use "config" to store secrets in the config file, or "env" to use environment variables
@@ -85,7 +85,7 @@ Edit the generated `config.json` to configure the control server:
 
 On first startup, you'll see the initial admin password printed in the logs:
 
-```
+```md
 ADMIN PASSWORD (change this!!): <random-password>
 ```
 
@@ -161,7 +161,7 @@ Create `config.json` on VPN server 1:
 
 **Key configuration points:**
 
-```
+```md
 - Features: Enable VPN and LAN only (no AUTH)
 - SignPem: Points to the control server's certificate (copied earlier)
 - Lan.Network: The local network range for VPN clients
@@ -219,7 +219,7 @@ Use different network ranges for each VPN server to avoid IP conflicts (e.g., 10
 
 Follow the [Linux server setup guide](/docs/server/linux-configurations) on each VPN server to:
 
-```
+```md
 - Configure IP forwarding
 - Set up iptables rules
 - Enable necessary kernel parameters
@@ -253,7 +253,7 @@ Follow [this guide](/docs/client/installation) to install the Tunnels client/app
 
 Once the client is open:
 
-```
+```md
 1. Click the `+` icon to add your control server
 2. Put 10.10.0.2 in the Host field
 3. Add 443 to the Port field
@@ -266,7 +266,7 @@ Follow [this guide](/docs/client/installation) to enable certificate validation 
 
 :::
 
-```
+```md
 5. Login with the admin credentials:
    - username: admin
    - password: <initial-password-from-logs>
@@ -276,7 +276,7 @@ Follow [this guide](/docs/client/installation) to enable certificate validation 
 
 After logging in for the first time:
 
-```
+```md
 1. Navigate to user settings
 2. Enable two-factor authentication
 3. Scan the QR code with your authenticator app
@@ -296,7 +296,7 @@ In the Tunnels client, create server entries for your VPN servers:
 
 #### VPN Server 1
 
-```
+```md
 1. Navigate to Servers → Add Server
 2. Configure:
    - Tag: vpn1
@@ -310,7 +310,7 @@ In the Tunnels client, create server entries for your VPN servers:
 
 #### VPN Server 2
 
-```
+```md
 1. Navigate to Servers → Add Server
 2. Configure:
    - Tag: vpn2
@@ -326,7 +326,7 @@ In the Tunnels client, create server entries for your VPN servers:
 
 Users can now connect to either VPN server:
 
-```
+```md
 1. Open Tunnels client
 2. Add control server (10.10.0.2:443) and log in
 3. Select a VPN server (vpn1 or vpn2)

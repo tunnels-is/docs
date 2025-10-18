@@ -16,7 +16,7 @@ Tunnels.is implements a multi-layered security architecture with post-quantum cr
 Tunnels.is supports two deployment models:
 
 **Single Server (AUTH + VPN Combined)**
-```
+```md
 Server with CertPem/KeyPem
 ├─ PrivKey: Signs connection requests
 └─ SignKey = PubKey: Verifies own signatures
@@ -25,7 +25,7 @@ Server with CertPem/KeyPem
 A single server handles both authentication and VPN tunneling. The server signs connection requests with its private key (`PrivKey`) and verifies them with its own public key (`SignKey = PubKey`).
 
 **Distributed (Separate Control and VPN Servers)**
-```
+```md
 Control Server: CertPem/KeyPem
 └─ PrivKey: Signs connection requests
 
@@ -42,7 +42,7 @@ The system uses PEM-encoded certificates and keys:
 
 #### CertPem & KeyPem - Server Identity
 
-```
+```md
 CertPem: Public certificate for TLS/HTTPS
 KeyPem: Private key for TLS and signing connection requests
 Algorithms: RSA-4096 or ECDSA P-521
@@ -53,7 +53,7 @@ The private key (`PrivKey`) from KeyPem is used by the control server to cryptog
 
 #### SignPem - Control Server Verification
 
-```
+```md
 Purpose: VPN server verifies control server signatures
 Content: control server's public key/certificate
 Used When: Control and VPN are separate servers
@@ -79,7 +79,7 @@ func initializeNewServer() error {
 
 **Distribution Flow:**
 
-```
+```md
 1. VPN server stores its CertPem in control database's `Server.PubKey` field
 2. Client queries control server for available VPN servers
 3. Client receives server certificate and pins it
@@ -94,7 +94,7 @@ This eliminates the need for a certificate authority. Each VPN server's certific
 
 The system combines classical and post-quantum cryptography:
 
-```
+```md
 - X25519: Elliptic curve Diffie-Hellman (128-bit classical security)
 - ML-KEM-1024: Module-Lattice-Based Key Encapsulation Mechanism (192-bit quantum security)
 ```
@@ -153,7 +153,7 @@ Signature algorithms in `crypt/keys.go` support both schemes.
 
 User registration (`server/handlers.go`):
 
-```
+```md
 - Password requirements: 10-200 characters
 - Password hashing: bcrypt with cost factor 13
 - Device token: UUID-based per-device identifier
@@ -162,7 +162,7 @@ User registration (`server/handlers.go`):
 
 User login (`server/handlers.go`):
 
-```
+```md
 1. Password verification via bcrypt comparison
 2. TOTP-based two-factor authentication
 3. Device token generation (unique per device)
@@ -171,7 +171,7 @@ User login (`server/handlers.go`):
 
 #### Two-Factor Authentication
 
-```
+```md
 Algorithm: TOTP (Time-Based One-Time Password)
 Library: `github.com/xlzd/gotp`
 Backup Codes: Recovery codes for account access
@@ -233,7 +233,7 @@ func API_AcceptUserConnections(w http.ResponseWriter, r *http.Request) {
 
 `SignKey` contains the control server's public key:
 
-```
+```md
 - Single server: SignKey = PubKey (own public key)
 - Distributed: SignKey = LoadPublicKey(SignPem) (control server's public key)
 ```
@@ -263,7 +263,7 @@ err = crypt.VerifySignature(
 
 **Security Properties:**
 
-```
+```md
 - Certificate pinning prevents man-in-the-middle attacks
 - No certificate authorities required (direct trust model)
 - Out-of-band certificate distribution through control database
@@ -276,7 +276,7 @@ err = crypt.VerifySignature(
 
 ### Handshake Protocol
 
-```
+```md
 [Client]              [Control Server]        [VPN Server]
    |                        |                       |
    |--1. POST /v3/session-->|                       |
@@ -309,7 +309,7 @@ err = crypt.VerifySignature(
 
 **Key Security Steps:**
 
-```
+```md
 - Step 2: Control server signs with its PrivKey
 - Step 3: VPN verifies with SignKey (from SignPem or own PubKey)
 - Step 4: VPN signs response with its own PrivKey
@@ -398,7 +398,7 @@ func (T *SocketWrapper) FinalizeClient(X25519PeerPub, Mlkem1024Cipher []byte) er
 
 Both parties now have the same final shared secret (`fss`), which includes:
 
-```
+```md
 - X25519 ECDH output (classical security)
 - ML-KEM shared secret (quantum security)
 - Both public keys (key confirmation)
@@ -429,11 +429,11 @@ This cleanup is called on both client (`client/session.go`) and server (`server/
 
 Each encrypted packet follows this structure:
 
-```
+```md
 [2-byte index][8-byte nonce][encrypted payload + 16-byte auth tag]
 ```
 
-```
+```md
 - Index: Client identifier (0-65535)
 - Nonce: Packet sequence number (counter)
 - Payload: Original IP packet (encrypted)
@@ -462,7 +462,7 @@ func (S *SEAL) Seal1(data []byte, index []byte) []byte {
 
 **Security Properties:**
 
-```
+```md
 - Unique nonce per packet (atomic counter prevents reuse)
 - Index authenticated but not encrypted (AAD)
 - Integrity and authenticity via AEAD

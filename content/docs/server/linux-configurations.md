@@ -10,7 +10,7 @@ $ apt install iptables
 
 # Configure iptables
 This is only needed for cloud servers with no software firewalls
-```bash
+```md
 # Clear out all iptable rules
 iptables -F
 # Drop packet fowarding
@@ -70,7 +70,7 @@ net.ipv4.conf.default.send_redirects = 0
 
 # Install Supervisor (optinal)
 Supervisor keeps tunnels running and handles log-rotation
-```bash
+```md
 # apt based systems
 $ apt install supervisor
 
@@ -103,6 +103,6 @@ supervisorctl add tunnels
 ````
 
 # Tools for debuggin
-```bash
+```md
 $ apt install net-tools tcpdump vim htop iftop
 ```

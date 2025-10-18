@@ -7,16 +7,16 @@ description: Download, Extract, Run.
 
 ## Minimum Requirements
  Will work decently for a few users but throughput will be limited
-```bash
- - Linux 
+```md
+ - Linux
  - iptables installed
  - 1 CPU core
  - 500 MB RAM
 ```
 
 ## Recommended Requirements
-```bash
- - Linux 
+```md
+ - Linux
  - iptables installed
  - 2-4 CPU core
  - 2 GB RAM
