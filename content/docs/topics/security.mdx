@@ -24,17 +24,17 @@ Server with CertPem/KeyPem
 
 A single server handles both authentication and VPN tunneling. The server signs connection requests with its private key (`PrivKey`) and verifies them with its own public key (`SignKey = PubKey`).
 
-**Distributed (Separate AUTH and VPN Servers)**
+**Distributed (Separate Control and VPN Servers)**
 ```
-AUTH Server: CertPem/KeyPem
+Control Server: CertPem/KeyPem
 └─ PrivKey: Signs connection requests
 
 VPN Server:
 ├─ Own CertPem/KeyPem: TLS connections
-└─ SignPem: AUTH server's public key for verification
+└─ SignPem: control server's public key for verification
 ```
 
-The AUTH server handles authentication and signs connection approvals. VPN servers receive these signed approvals and verify them using the AUTH server's public key (loaded from `SignPem`).
+The control server handles authentication and signs connection approvals. VPN servers receive these signed approvals and verify them using the control server's public key (loaded from `SignPem`).
 
 ### Certificates and Keys
 
@@ -47,19 +47,19 @@ The system uses PEM-encoded certificates and keys:
 - **Validity**: 10 years (configurable)
 - **Generation**: Self-signed via `certs.MakeCertV2()` in `certs/certs.go:163-284`
 
-The private key (`PrivKey`) from KeyPem is used by the AUTH server to cryptographically sign connection approvals.
+The private key (`PrivKey`) from KeyPem is used by the control server to cryptographically sign connection approvals.
 
-#### SignPem - AUTH Server Verification
-- **Purpose**: VPN server verifies AUTH server signatures
-- **Content**: AUTH server's public key/certificate
-- **Used When**: AUTH and VPN are separate servers
+#### SignPem - Control Server Verification
+- **Purpose**: VPN server verifies control server signatures
+- **Content**: control server's public key/certificate
+- **Used When**: Control and VPN are separate servers
 - **Loading**: VPN server loads this at startup via `crypt.LoadPublicKey(SignPem)` in `server/main.go:311-319`
 
-In single-server mode, `SignKey = PubKey` (verifies own signatures). In distributed mode, `SignKey` is loaded from SignPem (verifies AUTH server's signatures).
+In single-server mode, `SignKey = PubKey` (verifies own signatures). In distributed mode, `SignKey` is loaded from SignPem (verifies control server's signatures).
 
 #### Certificate Distribution
 
-Server certificates are distributed through the AUTH database:
+Server certificates are distributed through the control database:
 
 ```go
 // server/main.go:598-607
@@ -73,12 +73,12 @@ func initializeNewServer() error {
 ```
 
 **Distribution Flow:**
-1. VPN server stores its CertPem in AUTH database's `Server.PubKey` field
-2. Client queries AUTH for available VPN servers
+1. VPN server stores its CertPem in control database's `Server.PubKey` field
+2. Client queries control server for available VPN servers
 3. Client receives server certificate and pins it
 4. Client uses pinned certificate for all TLS connections
 
-This eliminates the need for a certificate authority. Each VPN server's certificate is directly pinned by clients through the trusted AUTH server.
+This eliminates the need for a certificate authority. Each VPN server's certificate is directly pinned by clients through the trusted control server.
 
 ### Cryptographic Primitives
 
@@ -160,9 +160,9 @@ User login (`server/handlers.go:256-297`):
 
 ### Request Signing and Verification
 
-#### AUTH Server Signing
+#### Control Server Signing
 
-After authentication, the AUTH server signs connection requests (`server/handlers.go:1131-1217`):
+After authentication, the control server signs connection requests (`server/handlers.go:1131-1217`):
 
 ```go
 func API_SessionCreate(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +184,7 @@ func API_SessionCreate(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-The AUTH server signs with `PrivKey` (from its KeyPem), creating a cryptographic proof that this connection was authorized.
+The control server signs with `PrivKey` (from its KeyPem), creating a cryptographic proof that this connection was authorized.
 
 #### VPN Server Verification
 
@@ -196,7 +196,7 @@ func API_AcceptUserConnections(w http.ResponseWriter, r *http.Request) {
     SCR := new(types.SignedConnectRequest)
     json.Unmarshal(body, &SCR)
 
-    // 2. Verify AUTH server's signature
+    // 2. Verify control server's signature
     err = crypt.VerifySignature(SCR.Payload, SCR.Signature, SignKey)
 
     // 3. Validate request freshness (< 4 minutes old)
@@ -211,9 +211,9 @@ func API_AcceptUserConnections(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-`SignKey` contains the AUTH server's public key:
+`SignKey` contains the control server's public key:
 - Single server: `SignKey = PubKey` (own public key)
-- Distributed: `SignKey = LoadPublicKey(SignPem)` (AUTH's public key)
+- Distributed: `SignKey = LoadPublicKey(SignPem)` (control server's public key)
 
 Request freshness validation prevents replay attacks by rejecting requests older than 4 minutes.
 
@@ -241,7 +241,7 @@ err = crypt.VerifySignature(
 **Security Properties:**
 - Certificate pinning prevents man-in-the-middle attacks
 - No certificate authorities required (direct trust model)
-- Out-of-band certificate distribution through AUTH database
+- Out-of-band certificate distribution through control database
 - Cryptographic proof of server identity via signature
 
 ---
@@ -251,7 +251,7 @@ err = crypt.VerifySignature(
 ### Handshake Protocol
 
 ```
-[Client]              [AUTH Server]           [VPN Server]
+[Client]              [Control Server]        [VPN Server]
    |                        |                       |
    |--1. POST /v3/session-->|                       |
    |   (DeviceToken, UID,   |                       |
@@ -282,7 +282,7 @@ err = crypt.VerifySignature(
 ```
 
 **Key Security Steps:**
-- Step 2: AUTH signs with its `PrivKey`
+- Step 2: Control server signs with its `PrivKey`
 - Step 3: VPN verifies with `SignKey` (from SignPem or own PubKey)
 - Step 4: VPN signs response with its own `PrivKey`
 - Step 4: Client verifies VPN signature with pinned `ServerPubKey`
