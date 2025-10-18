@@ -113,7 +113,7 @@ INCORRECT:
 - Third item
 ```
 
-**3. Consecutive Bold Statements MUST Use Line Breaks**
+**3. Consecutive Bold Statements AND MUST Use Line Breaks**
 ```markdown
 CORRECT:
 **First Point:** Description here<br/>
@@ -151,6 +151,7 @@ INCORRECT (inside code block):
 - **Feature Name:** Description
 \```
 ```
+
 
 ### Examples from Real Documentation
 
