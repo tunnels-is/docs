@@ -3,9 +3,13 @@ title: DNS Security
 description: Comprehensive guide to managing DNS security in Tunnels
 ---
 
+---
+
 # DNS Security
 
 Tunnels provides comprehensive DNS security features to protect your privacy, block unwanted content, and prevent DNS leaks. This guide covers all aspects of DNS security management.
+
+---
 
 # Overview
 
@@ -18,6 +22,8 @@ The Tunnels client includes a built-in DNS server that runs locally on `127.0.0.
 - Custom `DNS` record resolution
 - Statistics and monitoring
 ```
+
+---
 
 # Preventing DNS Leaks
 
@@ -48,6 +54,7 @@ When properly configured, DNS queries follow this secure path:
 5. Response is cached and returned to your application
 ```
 
+---
 
 # DNS Server Configuration
 
@@ -77,6 +84,7 @@ The Priority list is as follows:
 3. Client default `DNS` (your configured fallback)
 ```
 
+---
 
 # DNS over HTTPS (DoH)
 
@@ -101,6 +109,8 @@ When DoH is enabled:
 ```
 
 DoH adds an extra layer of privacy protection even when not connected to the VPN.
+
+---
 
 # Content Filtering
 
@@ -166,6 +176,8 @@ Both blocklists and whitelists can be:
 - Viewed with domain counts in the `UI`
 ```
 
+---
+
 # Custom DNS Records
 
 Custom DNS records allow you to override DNS resolution for specific domains. This is useful for:
@@ -204,7 +216,9 @@ When resolving a domain, Tunnels checks in this order:
 5. Upstream `DNS` resolution (via `VPN` tunnel or `DoH`)
 ```
 
-## Statistics and Monitoring
+---
+
+# Statistics and Monitoring
 
 Track DNS queries and blocked domains for monitoring and debugging.
 
@@ -241,7 +255,9 @@ For privacy, you can disable logging while still using blocklists and whitelists
 
 :::
 
-## DNS Cache
+---
+
+# DNS Cache
 
 Tunnels caches DNS responses to improve performance and reduce upstream queries.
 
@@ -255,7 +271,9 @@ Tunnels caches DNS responses to improve performance and reduce upstream queries.
 
 Caching reduces query latency and minimizes DNS leak opportunities by reducing the number of upstream queries.
 
-## Security Best Practices
+---
+
+# Security Best Practices
 
 ```md
 1. Always set system `DNS` to `127.0.0.1` to prevent `DNS` leaks
@@ -267,7 +285,9 @@ Caching reduces query latency and minimizes DNS leak opportunities by reducing t
 7. Use tunnel-specific `DNS` when connecting to region-specific services
 ```
 
-## Troubleshooting
+---
+
+# Troubleshooting
 
 ### Domain Not Resolving
 

@@ -5,7 +5,9 @@ description: Download, Extract, Run.
 
 [Full Download List](https://github.com/tunnels-is/tunnels/releases)
 
-## Minimum Requirements
+---
+
+# Minimum Requirements
  Will work decently for a few users but throughput will be limited
 ```md
  - Linux
@@ -14,7 +16,9 @@ description: Download, Extract, Run.
  - 500 `MB` `RAM`
 ```
 
-## Recommended Requirements
+---
+
+# Recommended Requirements
 ```md
  - Linux
  - `iptables` installed
@@ -22,7 +26,9 @@ description: Download, Extract, Run.
  - 2 `GB` `RAM`
 ```
 
-## Installing the server
+---
+
+# Installing the server
 
 1. **Download the server**
    ```bash

@@ -3,6 +3,8 @@ title: Server Config
 description: Server config example
 ---
 
+---
+
 # Config with comments
 :::warning
 
@@ -105,8 +107,7 @@ Use the clean config below for copying, the server does not support comments in 
 }
 ```
 
-
-
+---
 
 # Clean config for copying
 ```json

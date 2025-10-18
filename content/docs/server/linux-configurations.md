@@ -3,10 +3,14 @@ title: Linux Configurations
 description: Server key management
 ---
 
+---
+
 # Install iptables (required)
 ```bash
 $ apt install iptables
 ```
+
+---
 
 # Configure iptables
 This is only needed for cloud servers with no software firewalls
@@ -27,6 +31,8 @@ iptables -I INPUT -p udp --dport 444 -j ACCEPT`
 # Close the server off from incomming packets
 iptables -P INPUT DROP`
 ```
+
+---
 
 # Sysctl configurations (semi-required)
 ### /etc/sysctl.conf
@@ -68,6 +74,8 @@ net.ipv4.conf.all.send_redirects = 0
 net.ipv4.conf.default.send_redirects = 0
 ```
 
+---
+
 # Install Supervisor (optinal)
 Supervisor keeps tunnels running and handles log-rotation
 ```md
@@ -101,6 +109,8 @@ stderr_logfile_backups=100
 supervisorctl reread
 supervisorctl add tunnels
 ````
+
+---
 
 # Tools for debuggin
 ```md

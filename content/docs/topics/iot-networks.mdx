@@ -3,7 +3,9 @@ title: LAN over WAN
 description: Setting up a LAN server
 ---
 
-## Overview
+---
+
+# Overview
 
 This guide walks you through setting up a multi-network Tunnels deployment with a centralized authentication control server and multiple VPN servers. This architecture provides better scalability, redundancy, and geographic distribution of your VPN infrastructure.
 
@@ -18,7 +20,9 @@ In this setup, you'll deploy:
 
 The control server manages all users, devices, and groups, while VPN servers handle the actual tunnel traffic. VPN servers validate user connections by verifying signatures from the control server.
 
-## Server Installation
+---
+
+# Server Installation
 
 Follow [this guide](/docs/server/installation) to install the server on each Linux system (control server and VPN servers).
 
@@ -30,7 +34,9 @@ You'll need to install the server binary on all three servers:
 - VPN server 2 at 10.11.0.3
 ```
 
-## Control Server Setup
+---
+
+# Control Server Setup
 
 The control server handles authentication and management but does not process VPN traffic.
 
@@ -105,7 +111,9 @@ scp cert.pem user@10.10.0.3:/path/to/vpn-server/sign.pem
 scp cert.pem user@10.11.0.3:/path/to/vpn-server/sign.pem
 ```
 
-## VPN Server Setup
+---
+
+# VPN Server Setup
 
 VPN servers handle the actual tunnel traffic and local network access. They validate user connections using signatures from the control server.
 
@@ -241,7 +249,9 @@ Start each VPN server:
 
 The VPN servers will start listening for connections but won't handle authentication directly - they'll validate signatures from the control server.
 
-## Control Server Configuration
+---
+
+# Control Server Configuration
 
 Now that all servers are running, you need to register the VPN servers in the control server.
 
@@ -335,7 +345,9 @@ Users can now connect to either VPN server:
 
 The control server authenticates the user, and the selected VPN server validates the signed connection token.
 
-## Next Steps
+---
+
+# Next Steps
 
 - [Set up custom DNS](/docs/server/dns) for your infrastructure
 - [Configure DNS blocking](/docs/client/dns-blocking) for security

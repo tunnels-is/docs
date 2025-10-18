@@ -5,20 +5,29 @@ description: How to use the minimal CLI version of tunnels
 
 The Tunnels.is client can run in **CLI mode** - a headless, web-UI-free mode designed for servers, IoT devices, and automated deployments.
 
-## Overview
+---
+
+# Overview
 
 The client operates in two modes:
 
-1. **UI Mode** (default) - Runs a local web server with embedded React frontend on port 7777
-2. **CLI Mode** - Headless operation configured via JSON files, no web UI
+```md
+1. `UI` Mode (default) - Runs a local web server with embedded React frontend on port 7777
+2. `CLI` Mode - Headless operation configured via `JSON` files, no web `UI`
+```
 
 When CLI mode is enabled, the application:
-- Disables the web UI/API server entirely
-- Forces console-only logging (integrates with systemd/journald)
+
+```md
+- Disables the web `UI`/`API` server entirely
+- Forces console-only logging (integrates with `systemd`/`journald`)
 - Automatically connects to configured tunnels on startup
 - Uses device key authentication (no interactive login)
+```
 
-## Command-Line Flags
+---
+
+# Command-Line Flags
 
 ```bash
 ./tunnels [flags]
@@ -53,11 +62,13 @@ When CLI mode is enabled, the application:
 ./tunnels --requireConfig
 ```
 
-## File Structure
+---
+
+# File Structure
 
 When running in CLI mode, the application creates the following structure:
 
-```
+```md
 <basePath>/
 ├── tunnels.conf              # Main configuration file
 ├── tunnel/                   # Tunnel configurations
@@ -70,7 +81,9 @@ When running in CLI mode, the application creates the following structure:
 └── whitelists/               # DNS whitelists
 ```
 
-## Configuration
+---
+
+# Configuration
 
 ### Enabling CLI Mode
 
@@ -104,15 +117,20 @@ Add the `CLIConfig` section to your `tunnels.conf` to enable CLI mode:
 
 To use CLI mode, you need:
 
-1. **DeviceID (Device Key)**: Created via the Tunnels.is API or web interface - acts as your authentication credential
-2. **ServerID**: VPN server ID from your Tunnels.is account (MongoDB ObjectID format)
+```md
+1. `DeviceID` (Device Key): Created via the Tunnels.is `API` or web interface - acts as your authentication credential
+2. `ServerID`: `VPN` server `ID` from your Tunnels.is account (`MongoDB` `ObjectID` format)
+```
 
 **Typical workflow**:
+
+```md
 1. Register account on Tunnels.is
-2. Create a device through API or web interface
+2. Create a device through `API` or web interface
 3. Obtain `DeviceKey` from device creation response
 4. Select target `ServerID` from available servers in your account
 5. Add both to the `CLIConfig` section
+```
 
 ### Complete CLI Configuration Example
 
@@ -150,7 +168,9 @@ To use CLI mode, you need:
 }
 ```
 
-## Tunnel Configuration
+---
+
+# Tunnel Configuration
 
 Create a tunnel config at `<basePath>/tunnel/tunnels.conf`:
 
@@ -191,7 +211,9 @@ Create a tunnel config at `<basePath>/tunnel/tunnels.conf`:
 | `DNSBlocking` | bool | Enable DNS-based blocking |
 | `EncryptionType` | string | `chacha20` or `aes256gcm` |
 
-## Tunnel Types
+---
+
+# Tunnel Types
 
 Use the `--tunnelType` flag to auto-generate appropriate tunnel configurations:
 
@@ -204,9 +226,12 @@ Standard VPN usage - routes all traffic through VPN.
 ```
 
 **Configuration**:
-- `EnableDefaultRoute: true` - Routes all traffic
-- `RequestVPNPorts: true` - Enables port forwarding
-- `MTU: 1420`
+
+```md
+- `EnableDefaultRoute`: true - Routes all traffic
+- `RequestVPNPorts`: true - Enables port forwarding
+- `MTU`: 1420
+```
 
 ### IoT Tunnel (`iot`)
 
@@ -217,17 +242,22 @@ Lightweight mode for IoT and embedded devices.
 ```
 
 **Configuration**:
-- `EnableDefaultRoute: false` - LAN access only, no default route
-- `RequestVPNPorts: false` - No port forwarding
-- `LocalhostNat: true` - NAT localhost traffic
-- `AutoConnect: true` - Auto-start on boot
-- `MTU: 1320` - Lower MTU for 5G/mobile networks
+
+```md
+- `EnableDefaultRoute`: false - `LAN` access only, no default route
+- `RequestVPNPorts`: false - No port forwarding
+- `LocalhostNat`: true - `NAT` localhost traffic
+- `AutoConnect`: true - Auto-start on boot
+- `MTU`: 1320 - Lower `MTU` for `5G`/mobile networks
+```
 
 ### Strict Tunnel (`strict`)
 
 Reserved for future implementation.
 
-## Running the Client
+---
+
+# Running the Client
 
 ### Basic Startup
 
@@ -281,7 +311,9 @@ sudo systemctl start tunnels
 sudo journalctl -u tunnels -f
 ```
 
-## Permissions Requirements
+---
+
+# Permissions Requirements
 
 ### Linux (Recommended)
 
@@ -314,38 +346,54 @@ Must run as Administrator:
 .\tunnels.exe --basePath C:\tunnels
 ```
 
-## CLI-Specific Features
+---
+
+# CLI-Specific Features
 
 ### Auto-Connection
 
 When `CLIConfig` is present, the client:
+
+```md
 1. Scans all tunnel configurations in `<basePath>/tunnel/`
 2. Finds tunnels with `AutoConnect: true`
 3. Automatically establishes connections using device key authentication
 4. Runs connection checks every 30 seconds
+```
 
 ### Statistics Reporting
 
 If `CLIConfig.SendStats: true`:
-- Client sends CPU, RAM, and disk usage to server every 10 seconds
+
+```md
+- Client sends `CPU`, `RAM`, and disk usage to server every 10 seconds
 - Server can monitor device health remotely
-- Useful for IoT device fleet management
+- Useful for `IoT` device fleet management
+```
 
 ### Version Pinning
 
 If `CLIConfig.PinVersion: true`:
+
+```md
 - Client checks control server for pinned version
 - Downloads and installs specific version automatically
 - Prevents unexpected updates in production environments
+```
 
 ### Console-Only Logging
 
 When `CLIConfig` is set:
-- Logs go to stdout/stderr by default
-- No log files created (unless `ConsoleLogOnly: false`)
-- Integrates seamlessly with syslog/journald
 
-## Example Usage Patterns
+```md
+- Logs go to `stdout`/`stderr` by default
+- No log files created (unless `ConsoleLogOnly: false`)
+- Integrates seamlessly with `syslog`/`journald`
+```
+
+---
+
+# Example Usage Patterns
 
 ### IoT Device (Raspberry Pi)
 
@@ -425,7 +473,9 @@ RUN setcap 'cap_net_raw,cap_net_bind_service,cap_net_admin+eip' /usr/local/bin/t
 CMD ["/usr/local/bin/tunnels", "--basePath", "/etc/tunnels"]
 ```
 
-## Monitoring and Debugging
+---
+
+# Monitoring and Debugging
 
 ### View Logs
 
@@ -456,20 +506,31 @@ Enable detailed logging:
 ### Common Issues
 
 **Connection fails to establish**:
+
+```md
 - Verify `DeviceID` and `ServerID` are correct
 - Check `AutoConnect: true` in tunnel config
 - Review logs for authentication errors
+```
 
 **No logs appearing**:
-- Ensure `ConsoleLogOnly: true` for CLI mode
+
+```md
+- Ensure `ConsoleLogOnly: true` for `CLI` mode
 - Check `InfoLogging: true` and `ErrorLogging: true`
 - Use `--debug` flag for verbose output
+```
 
 **Permission denied errors**:
+
+```md
 - Linux: Set capabilities with `setcap` or run as root
 - macOS/Windows: Run with elevated privileges
+```
 
-## Differences from UI Mode
+---
+
+# Differences from UI Mode
 
 | Feature | UI Mode | CLI Mode |
 |---------|---------|----------|
@@ -481,18 +542,24 @@ Enable detailed logging:
 | Updates | Interactive prompts | Silent or disabled |
 | Monitoring | Web dashboard | Logs + stats API |
 
-## Use Cases
+---
+
+# Use Cases
 
 CLI mode is ideal for:
 
-- **IoT Devices**: Raspberry Pi, embedded systems, sensors
-- **Servers**: Headless cloud/on-premise servers
-- **Containers**: Docker, Kubernetes deployments
-- **Automated Deployments**: Ansible, Terraform, systemd
-- **Enterprise**: Centrally managed VPN client fleet
-- **Edge Computing**: Remote devices with limited resources
+```md
+- `IoT` Devices: Raspberry Pi, embedded systems, sensors
+- Servers: Headless cloud/on-premise servers
+- Containers: Docker, Kubernetes deployments
+- Automated Deployments: Ansible, Terraform, `systemd`
+- Enterprise: Centrally managed `VPN` client fleet
+- Edge Computing: Remote devices with limited resources
+```
 
-## Reference: Clean Config for Copying
+---
+
+# Reference: Clean Config for Copying
 ```json
 {
     "OpenUI": false,
