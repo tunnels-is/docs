@@ -152,10 +152,52 @@ INCORRECT (inside code block):
 \```
 ```
 
+**6. Main Section Titles MUST Use Single Hash (#)**
+```markdown
+CORRECT:
+# Overview
+# Configuration
+# Getting Started
+
+INCORRECT:
+## Overview
+## Configuration
+## Getting Started
+```
+
+**Note:** Use `##` (double hash) for subsections within main sections, and `###` (triple hash) for sub-subsections.
+
+**7. Main Section Titles MUST Have Section Dividers**
+```markdown
+CORRECT:
+Some introductory content here.
+
+---
+
+# Main Section Title
+
+Content of the section...
+
+---
+
+# Next Main Section
+
+INCORRECT:
+Some introductory content here.
+
+# Main Section Title
+
+Content of the section...
+
+# Next Main Section
+```
+
+**Note:** Add a `---` (horizontal rule) before each main section title (single `#`) to visually separate major sections. This applies to all `#` headers except when they immediately follow the frontmatter.
+
 
 ### Examples from Real Documentation
 
-See `content/docs/topics/dns-security.mdx` for a complete reference implementation of these formatting rules.
+See `content/docs/client/cli.mdx` for a complete reference implementation of these formatting rules.
 
 **WHY THESE RULES MATTER:**
 - Ensures consistent visual presentation across all documentation

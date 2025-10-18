@@ -1,0 +1,753 @@
+---
+title: Interface Configurations
+description: General tunnel interface settings
+---
+
+Configure the core settings for your tunnel interfaces including identification, IP addressing, performance, encryption, and connection behavior.
+
+---
+
+# Interface Identification
+
+Basic identifiers for the tunnel interface.
+
+### Configuration
+
+```json
+{
+  "Tag": "tunnels",
+  "IFName": "tunnels",
+  "ServerID": "68320c5943239f6fd6da5cba"
+}
+```
+
+**Fields**:
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `Tag` | string | Unique identifier for the tunnel | Auto-generated 8-char string |
+| `IFName` | string | Network interface name | Same as `Tag` |
+| `ServerID` | string | MongoDB ObjectID of VPN server to connect to | Empty string |
+
+---
+
+# IP Address Configuration
+
+Configure IPv4 and IPv6 addresses for the tunnel interface.
+
+### Configuration
+
+```json
+{
+  "IPv4Address": "172.22.22.1",
+  "IPv6Address": "fd00:1234:5678::1",
+  "NetMask": "255.255.255.255"
+}
+```
+
+**Fields**:
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `IPv4Address` | string | IPv4 address for tunnel | `"172.22.22.1"` |
+| `IPv6Address` | string | IPv6 address for tunnel (optional) | Auto-generated in `fd00::/8` |
+| `NetMask` | string | Network mask for IPv4 | `"255.255.255.255"` |
+
+---
+
+# Performance Settings
+
+Configure MTU and transmit queue length for network performance.
+
+### Configuration
+
+```json
+{
+  "MTU": 1420,
+  "TxQueueLen": 2000
+}
+```
+
+**Fields**:
+
+| Field | Type | Description | Default | IoT Default |
+|-------|------|-------------|---------|-------------|
+| `MTU` | int32 | Maximum Transmission Unit (bytes) | `1420` | `1320` |
+| `TxQueueLen` | int32 | Transmit queue length | `2000` | `2000` |
+
+**MTU Guidelines**:
+
+```md
+- Standard networks: `1420` bytes
+- 5G/mobile networks: `1320` bytes (IoT tunnels)
+- Valid range: `1280-1500` bytes
+```
+
+---
+
+# Encryption
+
+Configure the encryption algorithm for tunnel traffic.
+
+### Configuration
+
+```json
+{
+  "EncryptionType": 3
+}
+```
+
+**Encryption Types**:
+
+| Value | Algorithm | Description |
+|-------|-----------|-------------|
+| `1` | AES128 | 128-bit AES encryption |
+| `2` | AES256 | 256-bit AES encryption |
+| `3` | ChaCha20 | ChaCha20-Poly1305 (recommended) |
+
+**Default**: `3` (ChaCha20)
+
+---
+
+# Connection Behavior
+
+Configure auto-connection and reconnection settings.
+
+### Configuration
+
+```json
+{
+  "AutoConnect": false,
+  "AutoReconnect": true,
+  "RequestVPNPorts": true,
+  "KillSwitch": true
+}
+```
+
+**Fields**:
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `AutoConnect` | bool | Auto-connect on startup | `false` |
+| `AutoReconnect` | bool | Auto-reconnect on disconnection | `true` |
+| `RequestVPNPorts` | bool | Request port range from server for NAT | `true` |
+| `KillSwitch` | bool | Block internet if tunnel disconnects | `true` |
+
+**Behavior Details**:
+
+```md
+- `AutoConnect: true` - Tunnel connects automatically on client startup (IoT/headless)
+- `AutoReconnect: true` - Reconnects if ping timeout exceeds 60 seconds
+- `RequestVPNPorts: true` - Server allocates port range for port forwarding
+- `KillSwitch: true` - Blocks traffic if tunnel disconnects (prevents leaks)
+```
+
+---
+
+# NAT Configuration
+
+Configure localhost NAT for LAN access.
+
+### Configuration
+
+```json
+{
+  "LocalhostNat": false
+}
+```
+
+**Values**:
+
+```md
+- `false` - Standard routing (default)
+- `true` - Enable localhost NAT (IoT tunnels)
+```
+
+**Default**: `false`
+
+**Use Case**: IoT tunnels use `LocalhostNat: true` to route traffic through localhost for LAN device access.
+
+---
+
+# Firewall & Access Control
+
+Configure VPL (Virtual Private LAN) firewall rules.
+
+### Configuration
+
+```json
+{
+  "AllowedHosts": ["192.168.1.1", "example.com"],
+  "DisableFirewall": false
+}
+```
+
+**Fields**:
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `AllowedHosts` | []string | List of allowed hosts/IPs | `null` |
+| `DisableFirewall` | bool | Disable VPL firewall rules | `false` |
+
+**AllowedHosts Format**:
+
+```md
+- IP addresses: `"192.168.1.1"`, `"10.0.0.50"`
+- Hostnames: `"example.com"`, `"api.internal"`
+- Empty array or `null` allows all hosts
+```
+
+---
+
+# Routing Configuration
+
+Configure how network traffic is routed through your tunnel interfaces.
+
+### EnableDefaultRoute
+
+Controls whether all internet traffic routes through the VPN tunnel.
+
+**Configuration**:
+
+```json
+{
+  "EnableDefaultRoute": true
+}
+```
+
+**Values**:
+
+```md
+- `true` - Routes all traffic (`0.0.0.0/0`) through the tunnel
+- `false` - Only routes traffic for networks specified in the `Routes` array
+```
+
+**Default**: `false`
+
+### Routes Array
+
+Define specific networks to route through the tunnel (split tunneling).
+
+**Route Object Structure**:
+
+```json
+{
+  "Address": "10.0.0.0/8",
+  "Metric": "0",
+  "Gateway": ""
+}
+```
+
+**Fields**:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Address` | string | Network in CIDR notation (e.g., `10.0.0.0/8`, `192.168.1.0/24`) |
+| `Metric` | string | Route priority (lower = higher priority). Common values: `"0"`, `"1"`, `"100"` |
+| `Gateway` | string | Leave empty (`""`) for client configurations |
+
+### Route Priority (Metric)
+
+The `Metric` field determines route priority when multiple routes exist for the same destination.
+
+**Priority Rules**:
+
+```md
+- Lower metric = Higher priority
+- `"0"` = Highest priority
+- `"100"` = Lower priority
+- Default system routes typically use metric `100` or higher
+```
+
+### Example: Full Tunnel
+
+Route all traffic through the VPN:
+
+```json
+{
+  "ServerID": "your-server-id",
+  "Tag": "tunnels",
+  "EnableDefaultRoute": true,
+  "Routes": []
+}
+```
+
+### Example: Split Tunnel
+
+Route only private networks through the tunnel:
+
+```json
+{
+  "ServerID": "your-server-id",
+  "Tag": "office",
+  "EnableDefaultRoute": false,
+  "Routes": [
+    {
+      "Address": "10.0.0.0/8",
+      "Metric": "0",
+      "Gateway": ""
+    },
+    {
+      "Address": "192.168.0.0/16",
+      "Metric": "10",
+      "Gateway": ""
+    }
+  ]
+}
+```
+
+### Example: Single Host Route
+
+Route traffic for a specific server:
+
+```json
+{
+  "Routes": [
+    {
+      "Address": "8.8.8.8/32",
+      "Metric": "0",
+      "Gateway": ""
+    }
+  ]
+}
+```
+
+### Example: Priority Configuration
+
+```json
+{
+  "Routes": [
+    {
+      "Address": "10.0.0.0/16",
+      "Metric": "0",
+      "Gateway": ""
+    },
+    {
+      "Address": "10.0.0.0/8",
+      "Metric": "10",
+      "Gateway": ""
+    }
+  ]
+}
+```
+
+In this example, `10.0.0.0/16` has higher priority (metric `0`) than the broader `10.0.0.0/8` (metric `10`).
+
+---
+
+# DNS Configuration
+
+Configure DNS servers and custom DNS records for your tunnel interfaces.
+
+### DNSBlocking
+
+Enables or disables DNS-based domain blocking for the tunnel.
+
+**Configuration**:
+
+```json
+{
+  "DNSBlocking": true
+}
+```
+
+**Values**:
+
+```md
+- `true` - Enable DNS blocking (uses configured blocklists)
+- `false` - Disable DNS blocking (all domains allowed)
+```
+
+**Default**: `true`
+
+### DNSServers
+
+Array of custom DNS server IP addresses to use for this tunnel.
+
+**Configuration**:
+
+```json
+{
+  "DNSServers": ["8.8.8.8", "1.1.1.1"]
+}
+```
+
+**Format**:
+
+```md
+- Array of IPv4 addresses as strings
+- Empty array `[]` uses global default DNS servers
+- Servers are queried in order
+```
+
+**Default**: `[]` (uses global DNS: `1.1.1.1` and `8.8.8.8`)
+
+### DNSRecords
+
+Array of custom DNS records for local domain resolution.
+
+**DNSRecord Object Structure**:
+
+```json
+{
+  "Domain": "api.local",
+  "Wildcard": false,
+  "IP": ["192.168.1.100"],
+  "TXT": []
+}
+```
+
+**Fields**:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Domain` | string | Domain name to resolve (e.g., `api.local`, `*.example.com`) |
+| `Wildcard` | bool | Enable wildcard subdomain matching |
+| `IP` | []string | Array of IPv4 addresses to return for A records |
+| `TXT` | []string | Array of TXT record values (optional) |
+
+**Wildcard Behavior**:
+
+```md
+- `Wildcard: false` - Only matches exact domain (`example.com`)
+- `Wildcard: true` - Matches exact domain AND all subdomains (`*.example.com`, `api.example.com`)
+```
+
+### DNS Resolution Order
+
+When a DNS query is received, the tunnel resolves it in this order:
+
+```md
+1. DNS cache check
+2. Tunnel-specific `DNSRecords` (custom local records)
+3. Global `DNSRecords` (if no tunnel match)
+4. Upstream DNS query (using `DNSServers` or global defaults)
+5. Apply `DNSBlocking` rules (if enabled)
+```
+
+### Example: Custom DNS Servers
+
+```json
+{
+  "ServerID": "your-server-id",
+  "Tag": "office",
+  "DNSServers": [
+    "8.8.8.8",
+    "1.1.1.1",
+    "9.9.9.9"
+  ]
+}
+```
+
+### Example: Internal DNS
+
+```json
+{
+  "DNSServers": [
+    "10.0.0.1",
+    "192.168.1.1"
+  ]
+}
+```
+
+### Example: Single Domain
+
+```json
+{
+  "DNSRecords": [
+    {
+      "Domain": "api.local",
+      "Wildcard": false,
+      "IP": ["192.168.1.100"],
+      "TXT": []
+    }
+  ]
+}
+```
+
+### Example: Wildcard Domain
+
+```json
+{
+  "DNSRecords": [
+    {
+      "Domain": "example.com",
+      "Wildcard": true,
+      "IP": ["10.0.0.50"],
+      "TXT": []
+    }
+  ]
+}
+```
+
+### Example: Multiple IPs
+
+```json
+{
+  "DNSRecords": [
+    {
+      "Domain": "loadbalancer.local",
+      "Wildcard": false,
+      "IP": [
+        "192.168.1.100",
+        "192.168.1.101",
+        "192.168.1.102"
+      ],
+      "TXT": []
+    }
+  ]
+}
+```
+
+### Example: TXT Records
+
+```json
+{
+  "DNSRecords": [
+    {
+      "Domain": "verify.example.com",
+      "Wildcard": false,
+      "IP": [],
+      "TXT": [
+        "v=spf1 include:_spf.google.com ~all",
+        "verification=abc123"
+      ]
+    }
+  ]
+}
+```
+
+### Example: Local Development
+
+Route local domains to development servers:
+
+```json
+{
+  "DNSRecords": [
+    {
+      "Domain": "dev.local",
+      "Wildcard": true,
+      "IP": ["127.0.0.1"],
+      "TXT": []
+    }
+  ]
+}
+```
+
+Resolves:
+
+```md
+- `dev.local` → `127.0.0.1`
+- `api.dev.local` → `127.0.0.1`
+- `app.dev.local` → `127.0.0.1`
+```
+
+### Example: Internal Services
+
+Map internal service names to private IPs:
+
+```json
+{
+  "DNSRecords": [
+    {
+      "Domain": "database.internal",
+      "Wildcard": false,
+      "IP": ["10.0.1.50"],
+      "TXT": []
+    },
+    {
+      "Domain": "cache.internal",
+      "Wildcard": false,
+      "IP": ["10.0.1.51"],
+      "TXT": []
+    }
+  ]
+}
+```
+
+### Example: Split Horizon DNS
+
+Use different DNS servers for internal vs external queries:
+
+```json
+{
+  "DNSServers": ["10.0.0.1"],
+  "DNSRecords": [
+    {
+      "Domain": "internal.company.com",
+      "Wildcard": true,
+      "IP": ["10.0.2.100"],
+      "TXT": []
+    }
+  ]
+}
+```
+
+---
+
+# Complete Configuration Examples
+
+### Standard Desktop/Laptop Tunnel
+
+```json
+{
+  "ServerID": "68320c5943239f6fd6da5cba",
+  "Tag": "tunnels",
+  "IFName": "tunnels",
+  "IPv4Address": "172.22.22.1",
+  "IPv6Address": "fd00:1234:5678::1",
+  "NetMask": "255.255.255.255",
+  "MTU": 1420,
+  "TxQueueLen": 2000,
+  "EncryptionType": 3,
+  "AutoConnect": false,
+  "AutoReconnect": true,
+  "RequestVPNPorts": true,
+  "KillSwitch": true,
+  "LocalhostNat": false,
+  "DNSBlocking": true,
+  "DNSServers": ["8.8.8.8", "1.1.1.1"],
+  "DNSRecords": [],
+  "AllowedHosts": null,
+  "DisableFirewall": false,
+  "EnableDefaultRoute": true,
+  "Routes": []
+}
+```
+
+### IoT Device Tunnel
+
+```json
+{
+  "ServerID": "68320c5943239f6fd6da5cba",
+  "Tag": "iot-sensor",
+  "IFName": "iot-sensor",
+  "IPv4Address": "172.22.22.2",
+  "IPv6Address": "fd00:abcd:1234::1",
+  "NetMask": "255.255.255.255",
+  "MTU": 1320,
+  "TxQueueLen": 2000,
+  "EncryptionType": 3,
+  "AutoConnect": true,
+  "AutoReconnect": true,
+  "RequestVPNPorts": false,
+  "KillSwitch": true,
+  "LocalhostNat": true,
+  "DNSBlocking": true,
+  "DNSServers": [],
+  "DNSRecords": [],
+  "AllowedHosts": ["192.168.1.1", "192.168.1.50"],
+  "DisableFirewall": false,
+  "EnableDefaultRoute": false,
+  "Routes": []
+}
+```
+
+### Office/Enterprise Tunnel with Split Tunneling
+
+```json
+{
+  "ServerID": "68320c5943239f6fd6da5cba",
+  "Tag": "office",
+  "IFName": "office",
+  "IPv4Address": "10.0.0.1",
+  "IPv6Address": "",
+  "NetMask": "255.255.255.0",
+  "MTU": 1420,
+  "TxQueueLen": 2000,
+  "EncryptionType": 2,
+  "AutoConnect": false,
+  "AutoReconnect": true,
+  "RequestVPNPorts": true,
+  "KillSwitch": true,
+  "LocalhostNat": false,
+  "DNSBlocking": false,
+  "DNSServers": ["10.0.0.1", "8.8.8.8"],
+  "DNSRecords": [
+    {
+      "Domain": "api.internal",
+      "Wildcard": false,
+      "IP": ["10.0.0.100"],
+      "TXT": []
+    },
+    {
+      "Domain": "services.internal",
+      "Wildcard": true,
+      "IP": ["10.0.0.200"],
+      "TXT": []
+    }
+  ],
+  "AllowedHosts": null,
+  "DisableFirewall": false,
+  "EnableDefaultRoute": false,
+  "Routes": [
+    {
+      "Address": "10.0.0.0/8",
+      "Metric": "0",
+      "Gateway": ""
+    },
+    {
+      "Address": "192.168.0.0/16",
+      "Metric": "10",
+      "Gateway": ""
+    }
+  ]
+}
+```
+
+---
+
+# Configuration Location
+
+Tunnel configurations are stored in JSON format:
+
+```md
+- Linux/macOS: `~/.tunnels/tunnels/<Tag>.conf`
+- Windows: `%APPDATA%\tunnels\tunnels\<Tag>.conf`
+- Default filename: `tunnels.conf`
+```
+
+To edit tunnel configuration:
+
+```bash
+# Edit default tunnel configuration
+nano ~/.tunnels/tunnels/tunnels.conf
+
+# Or custom tunnel
+nano ~/.tunnels/tunnels/office.conf
+
+# Restart the tunnel to apply changes
+systemctl restart tunnels
+```
+
+---
+
+# Field Dependencies
+
+Important relationships between configuration fields:
+
+**IoT Tunnel Constraints**:
+
+```md
+- `AutoConnect: true` + `AutoReconnect: true` (required)
+- `RequestVPNPorts: false` (no port forwarding)
+- `LocalhostNat: true` (localhost routing)
+- `EnableDefaultRoute: false` (selective routing)
+- `MTU: 1320` (lower for mobile networks)
+```
+
+**Kill Switch Behavior**:
+
+```md
+- `KillSwitch: true` + `AutoReconnect: false` → Blocks all traffic on disconnect
+- `KillSwitch: true` + `AutoReconnect: true` → Blocks traffic until reconnected
+- `KillSwitch: false` → Uses default gateway on disconnect
+```
+
+**Firewall Rules**:
+
+```md
+- `DisableFirewall: false` + `AllowedHosts: null` → All hosts allowed
+- `DisableFirewall: false` + `AllowedHosts: [...]` → Only listed hosts allowed
+- `DisableFirewall: true` → No firewall restrictions
+```

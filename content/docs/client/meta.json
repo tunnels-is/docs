@@ -4,7 +4,7 @@
     "installation",
     "config",
     "cli",
-    "tunnel-interfaces",
+    "interface-configuration",
     "dns-blocking",
     "logging"
   ]
