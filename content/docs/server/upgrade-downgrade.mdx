@@ -1,5 +1,266 @@
 ---
-title: Updating Device Clients
-description: How to upgrade and downgrade device clients
+title: Client Updates & Downgrades
+description: How to manage IoT client versions using server-side version pinning
 ---
 
+The Tunnels server can control which client version IoT devices use through version pinning. When enabled, clients automatically update or downgrade to match the server's pinned version.
+
+---
+
+# How Auto-Update Works
+
+When a client starts or runs its periodic update check, it follows this process:
+
+```
+1. Client checks if version pinning is enabled (PinVersion = true)
+2. If pinned: Client makes GET request to server's /health endpoint
+3. Server responds with its configured ClientVersion
+4. Client compares server's version with its current version
+5. If different: Client downloads the specified version from GitHub
+6. Client verifies the binary using SHA256 checksum
+7. Client replaces its binary and restarts (if configured to do so)
+```
+
+**Important Notes:**
+
+**Platform Support:** Auto-updates only work on Linux. macOS and Windows clients cannot auto-update.<br/>
+**Update Source:** Client binaries are always downloaded from the official Tunnels GitHub releases.<br/>
+**Verification:** All downloads are verified against published SHA256 checksums before installation.
+
+---
+
+# Server Configuration
+
+## Setting the Pinned Version
+
+Edit your server's `config.json` file and set the `ClientVersion` field:
+
+```json
+{
+  "ClientVersion": "1.2.3",
+  "Features": ["LAN", "VPN", "AUTH", "DNS", "BBOLT"],
+  "PingTimeoutMinutes": 2,
+  ...
+}
+```
+
+**Version Format:** Use semantic version format without the "v" prefix (e.g., "1.2.3" not "v1.2.3").<br/>
+**Empty Value:** If `ClientVersion` is empty (""), no pinned version is advertised to clients.<br/>
+**Server Restart:** Changes to `config.json` require a server restart to take effect.
+
+## Health Endpoint
+
+The server exposes version information at the `/health` endpoint:
+
+```json
+{
+  "ServerVersion": "1.2.3",
+  "ClientVersion": "1.2.3",
+  "Uptime": "2024-01-15T10:30:00Z"
+}
+```
+
+Clients use this endpoint to discover the pinned version.
+
+---
+
+# Client Configuration
+
+## Enabling Version Pinning
+
+In the client's `tunnels.conf` file, configure the `CLIConfig` section:
+
+```json
+{
+  "CLIConfig": {
+    "ControlServerID": "your-server-id",
+    "DeviceID": "your-device-id",
+    "PinVersion": true,
+    "SkipUpdatePrompt": true
+  },
+  "AutoDownloadUpdate": true,
+  "DisableUpdates": false,
+  "UpdateCheckInterval": 1440
+}
+```
+
+**Configuration Fields:**
+
+```
+- PinVersion: Enable version pinning to follow server's ClientVersion
+- SkipUpdatePrompt: Skip user confirmation prompt during updates
+- AutoDownloadUpdate: Check and download updates at startup
+- DisableUpdates: Completely disable all update functionality
+- UpdateCheckInterval: Minutes between update checks (default: 1440 = 24 hours)
+- UpdateWhileConnected: Allow updates while VPN tunnels are active (default: false)
+- RestartPostUpdate: Automatically restart client after update (default: false)
+- ExitPostUpdate: Exit client after update, relies on external process manager
+```
+
+---
+
+# Update Behavior
+
+## Startup Updates
+
+When `AutoDownloadUpdate` is enabled, the client checks for updates during startup:
+
+```
+1. Client starts and loads configuration
+2. Checks if DisableUpdates is false
+3. Retrieves pinned version from server (if PinVersion enabled)
+4. Compares with current version
+5. If update needed: Downloads and prompts user (unless SkipUpdatePrompt is true)
+6. If user accepts: Installs update and exits (or restarts)
+7. If declined: Client continues with current version
+```
+
+## Background Updates
+
+A background update task runs periodically based on `UpdateCheckInterval`:
+
+```
+- Default interval: 1440 minutes (24 hours)
+- Skips update if tunnels are active (unless UpdateWhileConnected is true)
+- No user prompts - updates are automatic if version differs
+- Binary is replaced and client exits/restarts based on configuration
+```
+
+## Binary Replacement Process
+
+When an update is applied:
+
+```
+1. New binary is extracted to {executable}.next
+2. Current binary is backed up to {executable}.prev
+3. New binary is moved to active executable location
+4. Client exits or restarts based on configuration
+5. Temporary files are cleaned up
+```
+
+If replacement fails, the backup binary is restored.
+
+---
+
+# Version Downgrade
+
+The system treats downgrades identically to upgrades. If the server's pinned version is older than the client's current version, the client will automatically downgrade.
+
+**Use Cases:**
+
+**Rollback:** Quickly revert all clients to a previous stable version.<br/>
+**Bug Fix:** Move clients away from a problematic release.<br/>
+**Testing:** Test older versions in production environment.
+
+**Example Downgrade Flow:**
+
+```
+Server config.json: "ClientVersion": "1.1.0"
+Client current version: 1.2.3
+
+1. Client queries /health endpoint
+2. Sees server expects 1.1.0
+3. Downloads v1.1.0 from GitHub releases
+4. Verifies checksum
+5. Replaces binary with 1.1.0
+6. Restarts as version 1.1.0
+```
+
+---
+
+# Platform Limitations
+
+**Supported Platform:**
+
+```
+- Linux: Full auto-update support (amd64, arm64, armv7)
+```
+
+**Unsupported Platforms:**
+
+```
+- macOS: Auto-update disabled, manual updates required
+- Windows: Auto-update disabled, manual updates required
+```
+
+Clients on unsupported platforms can still use version pinning for monitoring, but will not automatically update.
+
+---
+
+# Monitoring & Troubleshooting
+
+## Client Logs
+
+Update activity is logged to the client's log output:
+
+```
+- "Starting updater"
+- "Pinned version from server: X.Y.Z"
+- "downloading pinned version: X.Y.Z"
+- "launching update process"
+- "update finished"
+```
+
+## Version Tracking
+
+The server tracks client versions in two ways:
+
+```
+- Active connections: Version stored in UserCoreMapping during connection
+- Historical data: Version stored in database with user device tokens
+```
+
+## Common Issues
+
+**Client Not Updating:**
+
+```
+- Verify DisableUpdates is false in client config
+- Check PinVersion is true in CLIConfig
+- Confirm ControlServerID is correct
+- Verify server's /health endpoint is accessible
+- Check client logs for error messages
+- Ensure client is running on Linux platform
+```
+
+**Update Fails:**
+
+```
+- Verify GitHub releases are accessible from client
+- Check network connectivity and firewall rules
+- Verify checksum validation isn't failing
+- Ensure client has write permissions to its binary location
+- Check if process manager is preventing binary replacement
+```
+
+**Unexpected Version:**
+
+```
+- Verify config.json ClientVersion matches intended version
+- Restart server after changing ClientVersion
+- Check client's current version pinning configuration
+- Verify client successfully queried /health endpoint
+```
+
+---
+
+# Best Practices
+
+**Testing:**
+
+**Test Updates:** Always test version pinning with a subset of devices before full deployment.<br/>
+**Rollback Plan:** Keep previous version numbers documented for quick rollback.<br/>
+**Monitor Logs:** Watch server and client logs during initial deployment.
+
+**Configuration:**
+
+**UpdateCheckInterval:** Balance update responsiveness with server load (default 24h is reasonable).<br/>
+**UpdateWhileConnected:** Usually keep false to avoid disrupting active tunnels.<br/>
+**SkipUpdatePrompt:** Enable for IoT devices, disable for interactive clients.<br/>
+**RestartPostUpdate:** Use with process managers (systemd, supervisor) for automatic recovery.
+
+**Version Management:**
+
+**Semantic Versioning:** Follow x.y.z format matching GitHub release tags.<br/>
+**Gradual Rollout:** Update ClientVersion in stages across server clusters.<br/>
+**Version Tracking:** Monitor database to see which client versions are in use.
