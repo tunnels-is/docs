@@ -1,13 +1,13 @@
 {
   "title": "Topics",
   "pages": [
-    "multi-network",
-    "homelab",
-    "private-vpn",
+    "single-server",
+    "multi-server",
     "dns-security",
+    "security",
+    "homelab",
     "iot-networks",
     "lan-over-wan",
-    "security",
     "anonymity"
   ]
 }

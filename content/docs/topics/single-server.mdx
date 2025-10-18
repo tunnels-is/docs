@@ -1,0 +1,48 @@
+---
+title: Single Server Setup
+description: This document explains how to setup a single Tunnels server that handles Authentication and VPN conenctions.
+---
+
+## Server Installation 
+Follow [this guide](/docs/server/installation) to install the Tunnels server on a linux system
+
+## Server Configuration
+Use the [Linux server setup guide](/docs/server/linux-configurations) to configure your Linux server.
+
+:::warning
+
+Do not forget to follow the iptables setup in the server configuration if your server is not behind NAT or a software firewall
+
+:::
+
+## Install the client
+Follow [this guide](/docs/client/installation) to install the client/app
+
+## Connect to your new server
+
+Once the client is open, follow these steps:
+
+:::tip
+
+`APIIP` and `APIPort` can be found in the Tunnels server config file
+
+:::
+
+```md
+1. click the `+` icon to add your server
+2. Put the `APIIP` in the `Host` field.
+3. Add the `APIPort` to the `Port` field
+4. Uncheck `ValidateCertificate`
+5. Login with the default user/password for administrator
+```
+:::tip
+
+Follow [this guide](/docs/client/installation) to enable certificate validation
+
+:::
+
+
+## Set up custom DNS
+Follow [this guide](/docs/server/dns) to set up custom DNS records for your home lab<br/>
+Follow [this guide](/docs/client/dns-blocking) to set up DNS Blocking
+

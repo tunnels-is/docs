@@ -54,10 +54,10 @@ The private key (`PrivKey`) from KeyPem is used by the control server to cryptog
 #### SignPem - Control Server Verification
 
 ```
-Purpose: VPN server verifies control server signatures<br/>
-Content: control server's public key/certificate<br/>
-Used When: Control and VPN are separate servers<br/>
-Loading: VPN server loads this at startup via `crypt.LoadPublicKey(SignPem)` in `server/main.go:311-319`
+Purpose: VPN server verifies control server signatures
+Content: control server's public key/certificate
+Used When: Control and VPN are separate servers
+Loading: VPN server loads this at startup via `crypt.LoadPublicKey(SignPem)` in `server/main.go`
 ```
 
 In single-server mode, `SignKey = PubKey` (verifies own signatures). In distributed mode, `SignKey` is loaded from SignPem (verifies control server's signatures).
@@ -67,7 +67,7 @@ In single-server mode, `SignKey = PubKey` (verifies own signatures). In distribu
 Server certificates are distributed through the control database:
 
 ```go
-// server/main.go:598-607
+// server/main.go
 func initializeNewServer() error {
     keyBytes := os.ReadFile(c.CertPem)
     return DB_CreateServer(&types.Server{
@@ -106,7 +106,7 @@ Both algorithms run in parallel. The final shared secret combines outputs from b
 Three authenticated encryption options:
 
 ```go
-// crypt/main.go:26-33
+// crypt/main.go
 const (
     AES128    // AES-128-GCM
     AES256    // AES-256-GCM (default)
@@ -121,7 +121,7 @@ All provide authenticated encryption with associated data (AEAD), ensuring both 
 Keys are derived using HKDF with SHA-512:
 
 ```go
-// crypt/main.go:76-99
+// crypt/main.go
 func (S *SEAL) HKDF(keySize int, sharedSecret []byte) error {
     h := hkdf.New(sha512.New, sharedSecret, nil, nil)
     io.ReadFull(h, S.key1)  // Client→Server encryption
@@ -141,7 +141,7 @@ Connection requests are signed using:
 - ECDSA: P-521 curve with SHA-256
 ```
 
-Signature algorithms in `crypt/keys.go:85-125` support both schemes.
+Signature algorithms in `crypt/keys.go` support both schemes.
 
 ---
 
@@ -151,7 +151,7 @@ Signature algorithms in `crypt/keys.go:85-125` support both schemes.
 
 #### Registration and Login
 
-User registration (`server/handlers.go:128-197`):
+User registration (`server/handlers.go`):
 
 ```
 - Password requirements: 10-200 characters
@@ -160,7 +160,7 @@ User registration (`server/handlers.go:128-197`):
 - Trial period: Automatic 1-day trial for new users
 ```
 
-User login (`server/handlers.go:256-297`):
+User login (`server/handlers.go`):
 
 ```
 1. Password verification via bcrypt comparison
@@ -182,7 +182,7 @@ Server Secret: Configured via `TwoFactorKey` setting
 
 #### Control Server Signing
 
-After authentication, the control server signs connection requests (`server/handlers.go:1131-1217`):
+After authentication, the control server signs connection requests (`server/handlers.go`):
 
 ```go
 func API_SessionCreate(w http.ResponseWriter, r *http.Request) {
@@ -208,7 +208,7 @@ The control server signs with `PrivKey` (from its KeyPem), creating a cryptograp
 
 #### VPN Server Verification
 
-The VPN server verifies the signature (`server/handlers.go:25-126`):
+The VPN server verifies the signature (`server/handlers.go`):
 
 ```go
 func API_AcceptUserConnections(w http.ResponseWriter, r *http.Request) {
@@ -242,7 +242,7 @@ Request freshness validation prevents replay attacks by rejecting requests older
 
 ### Server Identity Verification
 
-Clients verify server identity using certificate pinning and signature verification (`client/session.go:204-250`):
+Clients verify server identity using certificate pinning and signature verification (`client/session.go`):
 
 ```go
 // 1. Load pinned server certificate
@@ -320,7 +320,7 @@ err = crypt.VerifySignature(
 
 #### Client Initialization
 
-The client generates ephemeral keys (`crypt/main.go:260-272`):
+The client generates ephemeral keys (`crypt/main.go`):
 
 ```go
 func (T *SocketWrapper) InitializeClient() error {
@@ -340,7 +340,7 @@ The client sends `X25519Pub` (32 bytes) and `Mlkem1024Encap` (~1568 bytes) to th
 
 #### Server Processing
 
-The server generates its own keys and creates shared secrets (`crypt/main.go:300-336`):
+The server generates its own keys and creates shared secrets (`crypt/main.go`):
 
 ```go
 func (T *SocketWrapper) InitializeServer(X25519PeerPub, Mlkem1024Encap []byte) error {
@@ -375,7 +375,7 @@ The server sends `X25519Pub` (32 bytes) and `Mlkem1024Cipher` (~1568 bytes) to t
 
 #### Client Finalization
 
-The client completes key agreement (`crypt/main.go:274-298`):
+The client completes key agreement (`crypt/main.go`):
 
 ```go
 func (T *SocketWrapper) FinalizeClient(X25519PeerPub, Mlkem1024Cipher []byte) error {
@@ -406,7 +406,7 @@ Both parties now have the same final shared secret (`fss`), which includes:
 
 #### Memory Cleanup
 
-After key derivation, sensitive material is zeroed (`crypt/main.go:62-74`):
+After key derivation, sensitive material is zeroed (`crypt/main.go`):
 
 ```go
 func (S *SEAL) CleanPostSecretGeneration() {
@@ -421,7 +421,7 @@ func (S *SEAL) CleanPostSecretGeneration() {
 }
 ```
 
-This cleanup is called on both client (`client/session.go:263`) and server (`server/handlers.go:117`) after the handshake completes.
+This cleanup is called on both client (`client/session.go`) and server (`server/handlers.go`) after the handshake completes.
 
 ### Tunnel Encryption
 
@@ -442,7 +442,7 @@ Each encrypted packet follows this structure:
 
 #### Encryption Process
 
-Packets are encrypted with monotonically increasing nonces (`crypt/main.go:177-191`):
+Packets are encrypted with monotonically increasing nonces (`crypt/main.go`):
 
 ```go
 func (S *SEAL) Seal1(data []byte, index []byte) []byte {
@@ -471,7 +471,7 @@ func (S *SEAL) Seal1(data []byte, index []byte) []byte {
 
 #### Decryption Process
 
-Decryption verifies authenticity (`crypt/main.go:193-210`):
+Decryption verifies authenticity (`crypt/main.go`):
 
 ```go
 func (S *SEAL) Open1(data []byte, nonce []byte, staging []byte, index []byte) ([]byte, error) {
