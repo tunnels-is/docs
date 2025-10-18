@@ -10,7 +10,7 @@ This guide walks you through setting up a multi-network Tunnels deployment with 
 ### Architecture
 
 In this setup, you'll deploy:
-- **1 Control Server (AUTH server)**: Handles user authentication, authorization, and management
+- **1 Auth Server (AUTH server)**: Handles user authentication, authorization, and management
 - **Multiple VPN Servers**: Handle VPN connections and local network access
 
 The control server manages all users, devices, and groups, while VPN servers handle the actual tunnel traffic. VPN servers validate user connections by verifying signatures from the AUTH server.
@@ -24,7 +24,7 @@ You'll need to install the server binary on all three servers:
 - VPN server 1 at `10.10.0.3`
 - VPN server 2 at `10.11.0.3`
 
-## Control Server Setup
+## Auth Server Setup
 
 The control server handles authentication and management but does not process VPN traffic.
 
@@ -42,7 +42,7 @@ This will:
 - Initialize a new admin user with a random password
 - Print the initial admin password (save this!)
 
-### 2. Configure the Control Server
+### 2. Configure the Auth Server
 
 Edit the generated `config.json` to configure the AUTH server:
 
@@ -65,7 +65,7 @@ Edit the generated `config.json` to configure the AUTH server:
 - **APIIP/APIPort**: Set to your control server's IP and port
 - **SecretStore**: Use `"config"` to store secrets in the config file, or `"env"` to use environment variables
 
-### 3. Start the Control Server
+### 3. Start the Auth Server
 
 ```bash
 ./server
@@ -223,7 +223,7 @@ Start each VPN server:
 
 The VPN servers will start listening for connections but won't handle authentication directly - they'll validate signatures from the control server.
 
-## Control Server Configuration
+## Auth Server Configuration
 
 Now that all servers are running, you need to register the VPN servers in the control server.
 
@@ -231,7 +231,7 @@ Now that all servers are running, you need to register the VPN servers in the co
 
 Follow [this guide](/docs/client/installation) to install the Tunnels client/app.
 
-### 2. Connect to the Control Server
+### 2. Connect to the Auth Server
 
 Once the client is open:
 1. Click the `+` icon to add your control server
