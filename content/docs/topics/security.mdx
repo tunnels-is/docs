@@ -94,8 +94,10 @@ This eliminates the need for a certificate authority. Each VPN server's certific
 
 The system combines classical and post-quantum cryptography:
 
-- **X25519**: Elliptic curve Diffie-Hellman (128-bit classical security)
-- **ML-KEM-1024**: Module-Lattice-Based Key Encapsulation Mechanism (192-bit quantum security)
+```
+- X25519: Elliptic curve Diffie-Hellman (128-bit classical security)
+- ML-KEM-1024: Module-Lattice-Based Key Encapsulation Mechanism (192-bit quantum security)
+```
 
 Both algorithms run in parallel. The final shared secret combines outputs from both, providing security against both classical and quantum computers.
 
@@ -134,8 +136,10 @@ Each direction uses an independent key derived from the shared secret.
 
 Connection requests are signed using:
 
-- **RSA**: 4096-bit keys with PSS padding and SHA-256
-- **ECDSA**: P-521 curve with SHA-256
+```
+- RSA: 4096-bit keys with PSS padding and SHA-256
+- ECDSA: P-521 curve with SHA-256
+```
 
 Signature algorithms in `crypt/keys.go:85-125` support both schemes.
 
@@ -167,10 +171,12 @@ User login (`server/handlers.go:256-297`):
 
 #### Two-Factor Authentication
 
-**Algorithm**: TOTP (Time-Based One-Time Password)<br/>
-**Library**: `github.com/xlzd/gotp`<br/>
-**Backup Codes**: Recovery codes for account access<br/>
-**Server Secret**: Configured via `TwoFactorKey` setting
+```
+Algorithm: TOTP (Time-Based One-Time Password)
+Library: `github.com/xlzd/gotp`
+Backup Codes: Recovery codes for account access
+Server Secret: Configured via `TwoFactorKey` setting
+```
 
 ### Request Signing and Verification
 
@@ -427,10 +433,12 @@ Each encrypted packet follows this structure:
 [2-byte index][8-byte nonce][encrypted payload + 16-byte auth tag]
 ```
 
-- **Index**: Client identifier (0-65535)
-- **Nonce**: Packet sequence number (counter)
-- **Payload**: Original IP packet (encrypted)
-- **Auth Tag**: AEAD authentication tag
+```
+- Index: Client identifier (0-65535)
+- Nonce: Packet sequence number (counter)
+- Payload: Original IP packet (encrypted)
+- Auth Tag: AEAD authentication tag
+```
 
 #### Encryption Process
 
