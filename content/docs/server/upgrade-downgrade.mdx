@@ -106,31 +106,6 @@ When `AutoDownloadUpdate` is enabled, the client checks for updates during start
 7. If declined: Client continues with current version
 ```
 
-## Background Updates
-
-A background update task runs periodically based on `UpdateCheckInterval`:
-
-```md
-- Default interval: 1440 minutes (24 hours)
-- Skips update if tunnels are active (unless `UpdateWhileConnected` is true)
-- No user prompts - updates are automatic if version differs
-- Binary is replaced and client exits/restarts based on configuration
-```
-
-## Binary Replacement Process
-
-When an update is applied:
-
-```md
-1. New binary is extracted to {executable}.next
-2. Current binary is backed up to {executable}.prev
-3. New binary is moved to active executable location
-4. Client exits or restarts based on configuration
-5. Temporary files are cleaned up
-```
-
-If replacement fails, the backup binary is restored.
-
 ---
 
 # Version Downgrade
@@ -174,84 +149,36 @@ Client current version: 1.2.3
 - Windows: Auto-update disabled, manual updates required
 ```
 
-Clients on unsupported platforms can still use version pinning for monitoring, but will not automatically update.
-
----
-
-# Monitoring & Troubleshooting
-
-## Client Logs
-
-Update activity is logged to the client's log output:
-
-```md
-- "Starting updater"
-- "Pinned version from server: X.Y.Z"
-- "downloading pinned version: X.Y.Z"
-- "launching update process"
-- "update finished"
-```
-
-## Version Tracking
-
-The server tracks client versions in two ways:
-
-```md
-- Active connections: Version stored in UserCoreMapping during connection
-- Historical data: Version stored in database with user device tokens
-```
-
-## Common Issues
-
-**Client Not Updating:**
-
-```md
-- Verify DisableUpdates is false in client config
-- Check PinVersion is true in CLIConfig
-- Confirm ControlServerID is correct
-- Verify server's /health endpoint is accessible
-- Check client logs for error messages
-- Ensure client is running on Linux platform
-```
-
-**Update Fails:**
-
-```md
-- Verify GitHub releases are accessible from client
-- Check network connectivity and firewall rules
-- Verify checksum validation isn't failing
-- Ensure client has write permissions to its binary location
-- Check if process manager is preventing binary replacement
-```
-
-**Unexpected Version:**
-
-```md
-- Verify config.json ClientVersion matches intended version
-- Restart server after changing ClientVersion
-- Check client's current version pinning configuration
-- Verify client successfully queried /health endpoint
-```
-
 ---
 
 # Best Practices
 
-**Testing:**
+```
+Rollback Plan
+  - Keep previous version numbers documented for quick rollback
 
-**Test Updates:** Always test version pinning with a subset of devices before full deployment.<br/>
-**Rollback Plan:** Keep previous version numbers documented for quick rollback.<br/>
-**Monitor Logs:** Watch server and client logs during initial deployment.
+Monitor Logs
+  - Watch server and client logs during initial deployment
 
-**Configuration:**
+UpdateCheckInterval
+  - Balance update responsiveness with server load (default 24h is reasonable)
 
-**UpdateCheckInterval:** Balance update responsiveness with server load (default 24h is reasonable).<br/>
-**UpdateWhileConnected:** Usually keep false to avoid disrupting active `VPN` tunnels.<br/>
-**SkipUpdatePrompt:** Enable for `IoT` devices, disable for interactive clients.<br/>
-**RestartPostUpdate:** Use with process managers (`systemd`, `supervisor`) for automatic recovery.
+SkipUpdatePrompt
+  - Enable for IoT devices, disable for interactive clients
 
-**Version Management:**
+ExitPostUpdate
+  - Use with process managers (systemd, supervisor) for clean restart
 
-**Semantic Versioning:** Follow x.y.z format matching `GitHub` release tags.<br/>
-**Gradual Rollout:** Update `ClientVersion` in stages across server clusters.<br/>
-**Version Tracking:** Monitor database to see which client versions are in use.
+RestartPostUpdate
+  - Can be used to have tunnels self-restart post update
+  - ExitPostUpdate is recommended if using systemd or supervisor
+
+Semantic Versioning
+  - Follow x.y.z format matching GitHub release tags
+
+Gradual Rollout
+  - Update ClientVersion in stages across server clusters
+
+Version Tracking
+  - Monitor database to see which client versions are in use
+```
