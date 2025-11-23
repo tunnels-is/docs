@@ -1,9 +1,9 @@
 ---
-title: Client Updates & Downgrades
-description: How to manage IoT client versions using server-side version pinning
+title: Managed Clients; Updates & Downgrades
+description: How to manage CLI clients using server-side version pinning
 ---
 
-The Tunnels server can control which client version `IoT` devices use through `version pinning`. When enabled, clients automatically update or downgrade to match the server's pinned version.
+The Tunnels server can control which version clients use through `version pinning`. When enabled, clients automatically update or downgrade to match the server's pinned version.
 
 ---
 
@@ -37,16 +37,14 @@ Edit your server's `config.json` file and set the `ClientVersion` field:
 
 ```json
 {
+  ...
   "ClientVersion": "1.2.3",
-  "Features": ["LAN", "VPN", "AUTH", "DNS", "BBOLT"],
-  "PingTimeoutMinutes": 2,
   ...
 }
 ```
 
 **Version Format:** Use semantic version format without the "v" prefix (e.g., "1.2.3" not "v1.2.3").<br/>
 **Empty Value:** If `ClientVersion` is empty (""), no pinned version is advertised to clients.<br/>
-**Server Restart:** Changes to `config.json` require a server restart to take effect.
 
 ## Health Endpoint
 
