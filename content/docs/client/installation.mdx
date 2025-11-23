@@ -6,7 +6,7 @@ description: Download, Extract, Run.
 ---
 
 # Download
-  Visit [the download page](https://tunnels.is/download) on the tunnels website and download the client for your platform.
+Visit [the download page](https://tunnels.is/download) on the tunnels website and download the client for your platform.
 
 ---
 
@@ -32,3 +32,42 @@ description: Download, Extract, Run.
 
 [Click here](https://localhost:7777) to open the UI.<br/>
 URL: https://localhost:7777
+
+---
+
+# Optional linux configurations
+
+## Linux systemd Service
+
+Create `/etc/systemd/system/tunnels.service`:
+
+```ini
+[Unit]
+Description=Tunnels  Client
+Before=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/tunnels
+ExecStart=/opt/tunnels/tunnels
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## Controls
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl disable tunnels
+sudo systemctl enable tunnels
+sudo systemctl start tunnels
+
+# View logs
+sudo journalctl -u tunnels -f
+```

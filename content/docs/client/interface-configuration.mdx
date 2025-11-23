@@ -3,9 +3,6 @@ title: Interface Configurations
 description: General tunnel interface settings
 ---
 
-Configure the core settings for your tunnel interfaces including identification, IP addressing, performance, encryption, and connection behavior.
-
----
 
 # Interface Identification
 
@@ -50,7 +47,7 @@ Configure IPv4 and IPv6 addresses for the tunnel interface.
 | Field | Type | Description | Default |
 |-------|------|-------------|---------|
 | `IPv4Address` | string | IPv4 address for tunnel | `"172.22.22.1"` |
-| `IPv6Address` | string | IPv6 address for tunnel (optional) | Auto-generated in `fd00::/8` |
+| `IPv6Address` | string | IPv6 address for tunnel (optional) | Auto-generated as `fd00::/8` |
 | `NetMask` | string | Network mask for IPv4 | `"255.255.255.255"` |
 
 ---
@@ -80,7 +77,6 @@ Configure MTU and transmit queue length for network performance.
 ```md
 - Standard networks: `1420` bytes
 - 5G/mobile networks: `1320` bytes (IoT tunnels)
-- Valid range: `1280-1500` bytes
 ```
 
 ---
@@ -130,42 +126,21 @@ Configure auto-connection and reconnection settings.
 |-------|------|-------------|---------|
 | `AutoConnect` | bool | Auto-connect on startup | `false` |
 | `AutoReconnect` | bool | Auto-reconnect on disconnection | `true` |
-| `RequestVPNPorts` | bool | Request port range from server for NAT | `true` |
-| `KillSwitch` | bool | Block internet if tunnel disconnects | `true` |
-
-**Behavior Details**:
-
-```md
-- `AutoConnect: true` - Tunnel connects automatically on client startup (IoT/headless)
-- `AutoReconnect: true` - Reconnects if ping timeout exceeds 60 seconds
-- `RequestVPNPorts: true` - Server allocates port range for port forwarding
-- `KillSwitch: true` - Blocks traffic if tunnel disconnects (prevents leaks)
-```
+| `RequestVPNPorts` | bool | This tells tunnels to request standard VPN ports (not needed for the `LAN` feature) | `true` |
+| `KillSwitch` | bool | Prevents tunnels from restoring default routing on disconncetion | `true` |
 
 ---
 
-# NAT Configuration
-
-Configure localhost NAT for LAN access.
+# LocalHost NAT Configuration
+This feature will allow you to reach the VPN servers localhost address by remapping the servers IP to 12 
 
 ### Configuration
 
 ```json
 {
-  "LocalhostNat": false
+  "LocalhostNat": true
 }
 ```
-
-**Values**:
-
-```md
-- `false` - Standard routing (default)
-- `true` - Enable localhost NAT (IoT tunnels)
-```
-
-**Default**: `false`
-
-**Use Case**: IoT tunnels use `LocalhostNat: true` to route traffic through localhost for LAN device access.
 
 ---
 
@@ -259,7 +234,7 @@ The `Metric` field determines route priority when multiple routes exist for the 
 - Default system routes typically use metric `100` or higher
 ```
 
-### Example: Full Tunnel
+### Example: Tunnel With Default Route
 
 Route all traffic through the VPN:
 
@@ -272,9 +247,9 @@ Route all traffic through the VPN:
 }
 ```
 
-### Example: Split Tunnel
+### Example: Sub-Network Routing (split tunnel)
 
-Route only private networks through the tunnel:
+Route two specific networks networks through the tunnel:
 
 ```json
 {
@@ -289,7 +264,7 @@ Route only private networks through the tunnel:
     },
     {
       "Address": "192.168.0.0/16",
-      "Metric": "10",
+      "Metric": "0",
       "Gateway": ""
     }
   ]
@@ -312,27 +287,6 @@ Route traffic for a specific server:
 }
 ```
 
-### Example: Priority Configuration
-
-```json
-{
-  "Routes": [
-    {
-      "Address": "10.0.0.0/16",
-      "Metric": "0",
-      "Gateway": ""
-    },
-    {
-      "Address": "10.0.0.0/8",
-      "Metric": "10",
-      "Gateway": ""
-    }
-  ]
-}
-```
-
-In this example, `10.0.0.0/16` has higher priority (metric `0`) than the broader `10.0.0.0/8` (metric `10`).
-
 ---
 
 # DNS Configuration
@@ -341,7 +295,7 @@ Configure DNS servers and custom DNS records for your tunnel interfaces.
 
 ### DNSBlocking
 
-Enables or disables DNS-based domain blocking for the tunnel.
+Enables or disables DNS-based domain blocking for all traffic going through this tunnel.
 
 **Configuration**:
 
@@ -350,15 +304,6 @@ Enables or disables DNS-based domain blocking for the tunnel.
   "DNSBlocking": true
 }
 ```
-
-**Values**:
-
-```md
-- `true` - Enable DNS blocking (uses configured blocklists)
-- `false` - Disable DNS blocking (all domains allowed)
-```
-
-**Default**: `true`
 
 ### DNSServers
 
@@ -377,10 +322,8 @@ Array of custom DNS server IP addresses to use for this tunnel.
 ```md
 - Array of IPv4 addresses as strings
 - Empty array `[]` uses global default DNS servers
-- Servers are queried in order
+- Servers are used in order
 ```
-
-**Default**: `[]` (uses global DNS: `1.1.1.1` and `8.8.8.8`)
 
 ### DNSRecords
 
@@ -401,7 +344,7 @@ Array of custom DNS records for local domain resolution.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `Domain` | string | Domain name to resolve (e.g., `api.local`, `*.example.com`) |
+| `Domain` | string | Domain name (e.g., `api.local`, `*.example.com`) |
 | `Wildcard` | bool | Enable wildcard subdomain matching |
 | `IP` | []string | Array of IPv4 addresses to return for A records |
 | `TXT` | []string | Array of TXT record values (optional) |
@@ -411,43 +354,6 @@ Array of custom DNS records for local domain resolution.
 ```md
 - `Wildcard: false` - Only matches exact domain (`example.com`)
 - `Wildcard: true` - Matches exact domain AND all subdomains (`*.example.com`, `api.example.com`)
-```
-
-### DNS Resolution Order
-
-When a DNS query is received, the tunnel resolves it in this order:
-
-```md
-1. DNS cache check
-2. Tunnel-specific `DNSRecords` (custom local records)
-3. Global `DNSRecords` (if no tunnel match)
-4. Upstream DNS query (using `DNSServers` or global defaults)
-5. Apply `DNSBlocking` rules (if enabled)
-```
-
-### Example: Custom DNS Servers
-
-```json
-{
-  "ServerID": "your-server-id",
-  "Tag": "office",
-  "DNSServers": [
-    "8.8.8.8",
-    "1.1.1.1",
-    "9.9.9.9"
-  ]
-}
-```
-
-### Example: Internal DNS
-
-```json
-{
-  "DNSServers": [
-    "10.0.0.1",
-    "192.168.1.1"
-  ]
-}
 ```
 
 ### Example: Single Domain
@@ -585,6 +491,20 @@ Use different DNS servers for internal vs external queries:
 
 ---
 
+# DNS Resolution Order
+
+When a DNS query is received, the tunnel resolves it in this order:
+
+```md
+1. DNS cache check
+2. Tunnel-specific `DNSRecords` (custom local records)
+3. Global `DNSRecords` (if no tunnel match)
+4. Upstream DNS query (using `DNSServers` or global defaults)
+5. Apply `DNSBlocking` rules (if enabled)
+```
+
+---
+
 # Complete Configuration Examples
 
 ### Standard Desktop/Laptop Tunnel
@@ -600,15 +520,15 @@ Use different DNS servers for internal vs external queries:
   "MTU": 1420,
   "TxQueueLen": 2000,
   "EncryptionType": 3,
-  "AutoConnect": false,
+  "AutoConnect": true,
   "AutoReconnect": true,
   "RequestVPNPorts": true,
   "KillSwitch": true,
   "LocalhostNat": false,
   "DNSBlocking": true,
-  "DNSServers": ["8.8.8.8", "1.1.1.1"],
+  "DNSServers": ["9.9.9.9"],
   "DNSRecords": [],
-  "AllowedHosts": null,
+  "AllowedHosts": [],
   "DisableFirewall": false,
   "EnableDefaultRoute": true,
   "Routes": []
@@ -643,7 +563,7 @@ Use different DNS servers for internal vs external queries:
 }
 ```
 
-### Office/Enterprise Tunnel with Split Tunneling
+### Office/Enterprise setup with Split Tunneling
 
 ```json
 {
@@ -662,7 +582,7 @@ Use different DNS servers for internal vs external queries:
   "KillSwitch": true,
   "LocalhostNat": false,
   "DNSBlocking": false,
-  "DNSServers": ["10.0.0.1", "8.8.8.8"],
+  "DNSServers": ["10.0.0.1", "10.0.0.2"],
   "DNSRecords": [
     {
       "Domain": "api.internal",
@@ -686,11 +606,6 @@ Use different DNS servers for internal vs external queries:
       "Metric": "0",
       "Gateway": ""
     },
-    {
-      "Address": "192.168.0.0/16",
-      "Metric": "10",
-      "Gateway": ""
-    }
   ]
 }
 ```
@@ -711,13 +626,10 @@ To edit tunnel configuration:
 
 ```bash
 # Edit default tunnel configuration
-nano ~/.tunnels/tunnels/tunnels.conf
+vim ~/.tunnels/tunnels/tunnels.conf
 
 # Or custom tunnel
-nano ~/.tunnels/tunnels/office.conf
-
-# Restart the tunnel to apply changes
-systemctl restart tunnels
+vim ~/.tunnels/tunnels/office.conf
 ```
 
 ---
@@ -729,11 +641,9 @@ Important relationships between configuration fields:
 **IoT Tunnel Constraints**:
 
 ```md
-- `AutoConnect: true` + `AutoReconnect: true` (required)
-- `RequestVPNPorts: false` (no port forwarding)
-- `LocalhostNat: true` (localhost routing)
+- `RequestVPNPorts: false` (connect to WAN over LAN only)
+- `LocalhostNat: true` (map servers public IP to localhost for easy access)
 - `EnableDefaultRoute: false` (selective routing)
-- `MTU: 1320` (lower for mobile networks)
 ```
 
 **Kill Switch Behavior**:
@@ -747,7 +657,7 @@ Important relationships between configuration fields:
 **Firewall Rules**:
 
 ```md
-- `DisableFirewall: false` + `AllowedHosts: null` → All hosts allowed
+- `DisableFirewall: false` + `AllowedHosts: null` → No hosts allowed
 - `DisableFirewall: false` + `AllowedHosts: [...]` → Only listed hosts allowed
 - `DisableFirewall: true` → No firewall restrictions
 ```

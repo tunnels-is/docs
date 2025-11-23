@@ -5,12 +5,59 @@ description: Client configurations for Tunnels
 
 ---
 
+# Directory Structure
+
+Tunnels uses the following directory structure:
+
+```md
+<basePath>/
+├── tunnels.conf              # Main configuration file
+├── tunnel/                   # Tunnel configurations
+│   ├── tunnels.conf          # Default tunnel
+│   └── <name>.conf           # Additional tunnels
+├── users/                    # User auth files (UI mode only)
+├── logs/                     # Log files
+│   └── YYYY-MM-DD.log
+├── blocklists/               # DNS blocklists
+└── whitelists/               # DNS whitelists
+```
+
+---
+
+# Available CLI Flags
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--version` | Show version and exit | - |
+| `--basePath <path>` | Directory for config and log files | Executable directory |
+| `--tunnelType <type>` | Tunnel type: `default`, `strict`, or `iot` | `default` |
+| `--debug` | Enable debug logging | `false` |
+| `--requireConfig` | Exit if config file is missing (don't auto-generate) | `false` |
+
+### Examples
+
+```bash
+# Show version
+./tunnels --version
+# Run with custom config directory
+./tunnels --basePath /opt/tunnels
+# Create an IoT compatible config
+./tunnels --tunnelType iot
+# Enable debug mode
+./tunnels --debug
+# Exit with error if config file does not exist
+./tunnels --requireConfig
+```
+
+---
+
 # Client Config with comments
 :::warning
 
-Use the clean config below for copying, the client does not support comments in the config
+Do do not copy this config, tunnels does not support comments in the configuration <br/>There is a clean config for copying a bit further down
 
 :::
+
 ```json
 {
     "OpenUI": false, // Enable/Disable opening the UI on client start
@@ -31,9 +78,9 @@ Use the clean config below for copying, the client does not support comments in 
     // CLI specific configuration (only used in CLI mode)
     "CLIConfig": {
         "ControlServerID": "tunnels", // Which control server to use from ControlServers list
-        "DeviceID": "", // Device identifier for authentication
+        "DeviceID": "", // User API key or device key
         "ServerID": "", // Default server to connect to
-        "SendStats": true, // Enable/Disable sending statistics to server
+        "SendStats": false, // Enable/Disable sending statistics to server
         "PinVersion": false, // Lock to a specific client version
         "SkipUpdatePrompt": false // Skip prompting for updates
     },
@@ -78,98 +125,30 @@ Use the clean config below for copying, the client does not support comments in 
     "DNSServerPort": "53", // Port for local DNS server
 
     // DNS Blocklists - Protect against malicious domains
-    "DNSBlockLists": [
-        {
-            "Tag": "Ads", // Identifier for this blocklist
-            "URL": "https://raw.githubusercontent.com/n00bady/bluam/master/dns/merged/ads", // URL to download blocklist from
-            "Enabled": true, // Enable/Disable this blocklist
-            "Count": 0, // Number of domains in list (auto-populated)
-            "LastDownload": "0001-01-01T00:00:00Z" // Last download time (auto-populated)
-        },
-        {
-            "Tag": "AdultContent",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/adult",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "CryptoCurrency",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/crypto",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Drugs",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/drugs",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "FakeNews",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/fakenews",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Fraud",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/fraud",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Gambling",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/gambling",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Malware",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/malware",
-            "Enabled": true, // Highly recommended to keep enabled
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "SocialMedia",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/socialmedia",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Surveillance",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/surveillance",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        }
-    ],
+    // The app will populate this list at runtime.
+    // Custom blocklists can be added here or using the UI.
+    "DNSBlockLists": [],
 
     // DNS Whitelists - Domains that should never be blocked
+    // Custom whitelsits can be added here or using the UI.
     "DNSWhiteLists": [
         {
-            "Tag": "mywhitelist", // Custom whitelist identifier
-            "URL": "", // Optional URL to download whitelist from (leave empty for local file)
+            "Tag": "my-white-list", 
+             // Optional URL to download whitelist from.
+             // If empty, tunnels will load a file from the `whitelist` dir: ./whitelists/my-white-list 
+            "URL": "", 
             "Enabled": true,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
         }
     ],
 
-    // Custom DNS records - Override DNS resolution for specific domains
+    // Custom DNS records ( resolvable at all times, even while disconnected )
     "DNSRecords": [
         {
             "Domain": "example.com",
             "Wildcard": false, // Allow subdomain matching (*.example.com)
-            "IP": ["10.0.0.100"], // A record responses
-            "TXT": [], // TXT record responses
-            "CNAME": "" // CNAME record response
+            "IP": ["10.0.0.100"], // `A` record responses
+            "TXT": [], // `TXT` record responses
+            "CNAME": "" // `CNAME` record response
         }
     ]
 }
@@ -228,87 +207,8 @@ Use the clean config below for copying, the client does not support comments in 
     "DNSstats": false,
     "DNSServerIP": "127.0.0.1",
     "DNSServerPort": "53",
-    "DNSBlockLists": [
-        {
-            "Tag": "Ads",
-            "URL": "https://raw.githubusercontent.com/n00bady/bluam/master/dns/merged/ads",
-            "Enabled": true,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "AdultContent",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/adult",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "CryptoCurrency",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/crypto",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Drugs",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/drugs",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "FakeNews",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/fakenews",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Fraud",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/fraud",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Gambling",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/gambling",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Malware",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/malware",
-            "Enabled": true,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "SocialMedia",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/socialmedia",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        },
-        {
-            "Tag": "Surveillance",
-            "URL": "https://github.com/n00bady/bluam/raw/master/dns/merged/surveillance",
-            "Enabled": false,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        }
-    ],
-    "DNSWhiteLists": [
-        {
-            "Tag": "mywhitelist",
-            "URL": "",
-            "Enabled": true,
-            "Count": 0,
-            "LastDownload": "0001-01-01T00:00:00Z"
-        }
-    ],
+    "DNSBlockLists": [],
+    "DNSWhiteLists": [],
     "DNSRecords": []
 }
 ```
