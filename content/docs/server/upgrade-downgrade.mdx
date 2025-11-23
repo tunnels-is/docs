@@ -66,33 +66,26 @@ Clients use this endpoint to discover the pinned version.
 
 ## Enabling Version Pinning
 
-In the client's `tunnels.conf` file, configure the `CLIConfig` section:
+In the client's `tunnels.conf` file, configure the `CLIConfig` section.
 
 ```json
 {
   "CLIConfig": {
     "ControlServerID": "your-server-id",
     "DeviceID": "your-device-id",
+    // When set to `true`, the client will update to the pinned version returned by the server
     "PinVersion": true,
-    "SkipUpdatePrompt": true
+    "SkipUpdatePrompt": true,
   },
+
+  // Other update options
   "AutoDownloadUpdate": true,
   "DisableUpdates": false,
-  "UpdateCheckInterval": 1440
+  "UpdateCheckInterval": 1440,
+  "UpdateWhileConnected": false,
+  "RestartPostUpdate":true,
+  "ExitPostUpdate":false,
 }
-```
-
-**Configuration Fields:**
-
-```md
-- PinVersion: Enable version pinning to follow server's ClientVersion
-- SkipUpdatePrompt: Skip user confirmation prompt during updates
-- AutoDownloadUpdate: Check and download updates at startup
-- DisableUpdates: Completely disable all update functionality
-- UpdateCheckInterval: Minutes between update checks (default: 1440 = 24 hours)
-- UpdateWhileConnected: Allow updates while VPN tunnels are active (default: false)
-- RestartPostUpdate: Automatically restart client after update (default: false)
-- ExitPostUpdate: Exit client after update, relies on external process manager
 ```
 
 ---
