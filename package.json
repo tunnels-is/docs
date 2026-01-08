@@ -9,7 +9,7 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@react-router/node": "^7.8.2",
+    "@react-router/node": "^7.9.4",
     "@react-router/serve": "^7.8.2",
     "fumadocs-core": "15.8.0",
     "fumadocs-docgen": "^3.0.2",
