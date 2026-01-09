@@ -16,14 +16,7 @@ The server requires the following files:
 ```
 <serverPath>/
 ├── config.json           # Main server configuration file
-├── cert.pem             # Server TLS certificate (public)
-├── key.pem              # Server TLS private key
-└── sign.pem             # Controller signing certificate (public)
 ```
-
-**Certificate Notes:**
-- `cert.pem` and `key.pem` are the server's TLS certificate pair for secure VPN connections
-- `sign.pem` is the public signing certificate from the controller, used to validate connection requests
 
 ---
 
@@ -93,6 +86,8 @@ Use the clean config below for copying, the server does not support comments in 
     "PayKey": "", // Payment/billing integration key (optional)
     "CertPem": "./cert.pem", // Public certificate for this VPN server
     "KeyPem": "./key.pem", // Private key for this VPN server
+    "CertPems": ["./cert.pem","./cert2.pem"], // Use this field to load additional certificates for the API
+    "KeyPems": ["./key.pem","./keyw.pem"], // Use this field to load additional certificates for the API
     "SignPem": "./sign.pem", // Public signing certificate from the controller
     // This allows the server to validate that connection attempts have been processed by the correct control server
 
@@ -187,7 +182,9 @@ Use the clean config below for copying, the server does not support comments in 
     "TwoFactorKey": "1f9890c7b1e94365ab8f65d0e3d41bb4",
     "PayKey": "",
     "CertPem": "./cert.pem",
+    "CertPems":[],
     "SignPem": "./sign.pem",
-    "KeyPem": "./key.pem"
+    "KeyPem": "./key.pem",
+    "KeyPems":[]
 }
 ```
