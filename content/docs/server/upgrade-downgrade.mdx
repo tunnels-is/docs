@@ -13,7 +13,7 @@ When a client starts or runs its periodic update check, it follows this process:
 
 ```md
 1. Client checks if version pinning is enabled (`PinVersion` = true)
-2. If pinned: Client makes `GET` request to server's `/health` endpoint
+2. If pinned: Client makes `GET` request to server's `/` endpoint (also available at `/health`)
 3. Server responds with its configured `ClientVersion`
 4. Client compares server's version with its current version
 5. If different: Client downloads the specified version from `GitHub`
@@ -73,18 +73,17 @@ In the client's `tunnels.conf` file, configure the `CLIConfig` section.
   "CLIConfig": {
     "ControlServerID": "your-server-id",
     "DeviceID": "your-device-id",
-    // When set to `true`, the client will update to the pinned version returned by the server
+    "ServerID": "your-vpn-server-id",
+    "SendStats": false,
     "PinVersion": true,
-    "SkipUpdatePrompt": true,
+    "SkipUpdatePrompt": true
   },
-
-  // Other update options
   "AutoDownloadUpdate": true,
   "DisableUpdates": false,
   "UpdateCheckInterval": 1440,
   "UpdateWhileConnected": false,
-  "RestartPostUpdate":true,
-  "ExitPostUpdate":false,
+  "RestartPostUpdate": true,
+  "ExitPostUpdate": false
 }
 ```
 
@@ -94,7 +93,7 @@ In the client's `tunnels.conf` file, configure the `CLIConfig` section.
 
 ## Startup Updates
 
-When `AutoDownloadUpdate` is enabled, the client checks for updates during startup:
+When `AutoDownloadUpdate` is enabled, the client checks for updates during startup. A separate periodic update loop runs on the `UpdateCheckInterval` timer regardless of this setting (controlled by `DisableUpdates`):
 
 ```md
 1. Client starts and loads configuration
@@ -160,8 +159,8 @@ Rollback Plan
 Monitor Logs
   - Watch server and client logs during initial deployment
 
-UpdateCheckInterval
-  - Balance update responsiveness with server load (default 24h is reasonable)
+UpdateCheckInterval (in minutes)
+  - Balance update responsiveness with server load (default 1440 min = 24h)
 
 SkipUpdatePrompt
   - Enable for IoT devices, disable for interactive clients

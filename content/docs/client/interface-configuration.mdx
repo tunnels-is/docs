@@ -99,7 +99,7 @@ Configure the encryption algorithm for tunnel traffic.
 |-------|-----------|-------------|
 | `1` | AES128 | 128-bit AES encryption |
 | `2` | AES256 | 256-bit AES encryption |
-| `3` | ChaCha20 | ChaCha20-Poly1305 (recommended) |
+| `3` | ChaCha20 | XChaCha20-Poly1305 (recommended, default) |
 
 **Default**: `3` (ChaCha20)
 
@@ -197,7 +197,7 @@ Controls whether all internet traffic routes through the VPN tunnel.
 - `false` - Only routes traffic for networks specified in the `Routes` array
 ```
 
-**Default**: `false`
+**Default**: `true` for `default` tunnel type, `false` for `iot` tunnel type
 
 ### Routes Array
 
@@ -286,6 +286,33 @@ Route traffic for a specific server:
   ]
 }
 ```
+
+---
+
+# Networks Configuration
+
+Configure LAN networks accessible through this tunnel.
+
+### Configuration
+
+```json
+{
+  "Networks": [
+    {
+      "Tag": "office-lan",
+      "Network": "10.0.0.0/16"
+    }
+  ]
+}
+```
+
+**Fields**:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Networks` | []Network | Array of LAN networks accessible via this tunnel |
+| `Network.Tag` | string | Identifier for the network |
+| `Network.Network` | string | Network in CIDR notation |
 
 ---
 
@@ -497,10 +524,12 @@ When a DNS query is received, the tunnel resolves it in this order:
 
 ```md
 1. DNS cache check
-2. Tunnel-specific `DNSRecords` (custom local records)
-3. Global `DNSRecords` (if no tunnel match)
-4. Upstream DNS query (using `DNSServers` or global defaults)
-5. Apply `DNSBlocking` rules (if enabled)
+2. Whitelist check (if matched, skip blocklist)
+3. Blocklist check (if `DNSBlocking` is enabled)
+4. Tunnel-specific `DNSRecords` (custom local records)
+5. Global `DNSRecords` (if no tunnel match)
+6. If blocked and no custom record matched, block the query
+7. Upstream DNS query (using `DNSServers` or global defaults)
 ```
 
 ---
@@ -617,19 +646,19 @@ When a DNS query is received, the tunnel resolves it in this order:
 Tunnel configurations are stored in JSON format:
 
 ```md
-- Linux/macOS: `~/.tunnels/tunnels/<Tag>.conf`
-- Windows: `%APPDATA%\tunnels\tunnels\<Tag>.conf`
+- Default: `<executable_dir>/tunnel/<Tag>.conf`
+- Custom base path: `<basePath>/tunnel/<Tag>.conf` (set via `--basePath` flag)
 - Default filename: `tunnels.conf`
 ```
 
 To edit tunnel configuration:
 
 ```bash
-# Edit default tunnel configuration
-vim ~/.tunnels/tunnels/tunnels.conf
+# Edit default tunnel configuration (from the executable directory)
+vim ./tunnel/tunnels.conf
 
 # Or custom tunnel
-vim ~/.tunnels/tunnels/office.conf
+vim ./tunnel/office.conf
 ```
 
 ---

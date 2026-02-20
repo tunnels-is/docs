@@ -7,7 +7,7 @@ description: Server config example
 
 The Tunnels server requires a configuration file to define network settings, features, authentication, and VPN parameters. This configuration controls how the server operates, including bandwidth allocation, port ranges, DNS settings, and security options.
 
-The server configuration file is typically located in the same directory as the server executable or can be specified via command-line arguments.
+The server configuration file is typically located in the same directory as the server executable or can be specified via the `--configPath` flag. The server supports JSON (`.json`), YAML (`.yaml`, `.yml`) configuration formats.
 
 ## Configuration Files
 
@@ -15,7 +15,7 @@ The server requires the following files:
 
 ```
 <serverPath>/
-├── config.json           # Main server configuration file
+├── config.json           # Main server configuration file (or .yaml/.yml)
 ```
 
 ---
@@ -32,6 +32,7 @@ Use the clean config below for copying, the server does not support comments in 
         "LAN", // Enables WAN over LAN
         "VPN", // Enables Generic VPN functionality
         "AUTH", // Enables the authentication control unit
+        "DNS", // Enables DNS features (reserved, not yet active at runtime)
         "BBOLT" // Enables bbolt embedded database (recommended for most users)
     ],
     "LogAPIHosts": false, // Enable logging of API client hostnames
@@ -80,7 +81,7 @@ Use the clean config below for copying, the server does not support comments in 
     // Secrets can be stored in environment variables or in the configuration file itself
     // If SecretStore is set to "env", secrets will be read from environment variables
     // with the same names as the fields in this configuration
-    "SecretStore": "config", // Options: "env" | "config"
+    "SecretStore": "config", // Options: "env" | "config" (defaults to "env" if omitted)
     "DBurl": "", // Only used if MongoDB is configured as the default database
     "TwoFactorKey": "1f9890c7b1e94365ab8f65d0e3d41bb4", // Encryption key used for storing two factor authentication
     "PayKey": "", // Payment/billing integration key (optional)
@@ -93,9 +94,9 @@ Use the clean config below for copying, the server does not support comments in 
 
     // Administration and Management
     "Hostname": "tunnels.local", // Base hostname used for DHCP assignments
-    "PingTimeoutMinutes": 0, // How many minutes it takes to time out a client connection (0 = disabled)
-    "DHCPTimeoutHours": 0, // How many hours until DHCP assignments are released (0 = disabled)
-    "NetAdmins": [], // Device tokens of network administrators (can access any device over the network)
+    "PingTimeoutMinutes": 2, // How many minutes it takes to time out a client connection (minimum: 2)
+    "DHCPTimeoutHours": 1, // How many hours until DHCP assignments are released (minimum: 1)
+    "NetAdmins": [], // SHA3-256 hashed identifiers of network administrators (use --admin flag to add)
     "AdminAPIKey": "0cd1f6c4-9b98-4bda-860c-0c04f103c84d", // API key for administrative control server access
     "ClientVersion": "", // Enforce specific client version for all devices (empty = no enforcement)
     // More details can be found in the "Updating Device Clients" guide
@@ -143,8 +144,8 @@ Use the clean config below for copying, the server does not support comments in 
         "AUTH",
         "BBOLT"
     ],
-    "PingTimeoutMinutes": 0,
-    "DHCPTimeoutHours": 0,
+    "PingTimeoutMinutes": 2,
+    "DHCPTimeoutHours": 1,
     "LogAPIHosts": false,
     "ClientVersion": "",
     "VPNIP": "192.168.1.32",

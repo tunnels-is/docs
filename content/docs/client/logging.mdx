@@ -9,7 +9,7 @@ The VPN server also has a `--silent` flag to disable all logging.
 
 ---
 
-# How To Disanle Logging
+# How To Disable Logging
 
 When all logging options are turned off, the app will not log to file or to console.<br/>
 This applies to the UI as well.
@@ -33,18 +33,19 @@ This applies to the UI as well.
 ### Logging options
 
 ```md
-- Basic Logging
-   Enables logs for basic things like `DNS` queries and connecting/disconnecting
-
-- Error Logging
-   Enables logging of all errors
+- Debug Logging
+   Controls all application logging (DNS queries, connections, errors, etc.)
+   This is the primary logging toggle. When disabled, no logs are written to file or console.
 
 - Console Logging
    Enables logging to `stdout`/console.
 
-- Debug Logging
-   Enabled more extensive logging for debug purpouses.
-
 - Debug Mode
    Enables javascript console logging for `UI` debugging.
 ```
+
+:::note
+
+All application logging is controlled by the `DebugLogging` setting (or the `--debug` CLI flag). The `InfoLogging` and `ErrorLogging` fields exist in the config but have no effect.
+
+:::

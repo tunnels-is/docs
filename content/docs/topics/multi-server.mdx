@@ -69,10 +69,18 @@ Edit the generated `config.json` to configure the control server:
   "SecretStore": "config",
   "UserMaxConnections": 10,
   "PingTimeoutMinutes": 5,
+  "AdminAPIKey": "auto-generated-on-first-run",
+  "TwoFactorKey": "auto-generated-on-first-run",
   "CertPem": "./cert.pem",
   "KeyPem": "./key.pem"
 }
 ```
+
+:::note
+
+`AdminAPIKey` and `TwoFactorKey` are auto-generated when you run `./server --config`. Keep these values in your config file.
+
+:::
 
 **Key configuration points:**
 

@@ -47,7 +47,7 @@ The system uses PEM-encoded certificates and keys:
 ```md
 `CertPem`: Public certificate for `TLS`/`HTTPS`
 `KeyPem`: Private key for `TLS` and signing connection requests
-Algorithms: `RSA-4096` or `ECDSA P-521`
+Algorithms: `ECDSA P-521` (auto-generated) or `RSA-4096` (user-provided)
 Validity: 10 years (configurable)
 ```
 
@@ -98,10 +98,11 @@ The system combines classical and post-quantum cryptography:
 
 ```md
 - `X25519`: Elliptic curve Diffie-Hellman (128-bit classical security)
-- `ML-KEM-1024`: Module-Lattice-Based Key Encapsulation Mechanism (192-bit quantum security)
+- `TLS` layer: `X25519MLKEM768` hybrid key exchange (ML-KEM-768)
+- Tunnel data channel: `ML-KEM-1024` key encapsulation (192-bit quantum security)
 ```
 
-Both algorithms run in parallel. The final shared secret combines outputs from both, providing security against both classical and quantum computers.
+Both classical and post-quantum algorithms run in parallel. The TLS handshake uses ML-KEM-768 via the `X25519MLKEM768` curve preference, while the tunnel data encryption uses ML-KEM-1024. The final shared secret combines outputs from both, providing security against both classical and quantum computers.
 
 #### AEAD Ciphers
 
@@ -111,12 +112,12 @@ Three authenticated encryption options:
 // crypt/main.go
 const (
     AES128    // AES-128-GCM
-    AES256    // AES-256-GCM (default)
-    CHACHA20  // ChaCha20-Poly1305
+    AES256    // AES-256-GCM
+    CHACHA20  // XChaCha20-Poly1305 (default for new tunnels)
 )
 ```
 
-All provide authenticated encryption with associated data (AEAD), ensuring both confidentiality and integrity.
+The default encryption for new tunnel connections is XChaCha20-Poly1305 (the extended nonce variant with 24-byte nonces). All three options provide authenticated encryption with associated data (AEAD), ensuring both confidentiality and integrity.
 
 #### Key Derivation
 

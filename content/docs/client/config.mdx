@@ -33,6 +33,7 @@ Tunnels uses the following directory structure:
 | `--tunnelType <type>` | Tunnel type: `default`, `strict`, or `iot` | `default` |
 | `--debug` | Enable debug logging | `false` |
 | `--requireConfig` | Exit if config file is missing (don't auto-generate) | `false` |
+| `--tls` | Enable TLS for the local API server (HTTPS) | `false` |
 
 ### Examples
 
@@ -47,6 +48,8 @@ Tunnels uses the following directory structure:
 ./tunnels --debug
 # Exit with error if config file does not exist
 ./tunnels --requireConfig
+# Enable HTTPS for local API server
+./tunnels --tls
 ```
 
 ---
@@ -91,7 +94,7 @@ Do do not copy this config, tunnels does not support comments in the configurati
     "RestartPostUpdate": false, // Restart application after updating
     "UpdateWhileConnected": false, // Allow updates while connected to VPN
     "UpdateCheckInterval": 1440, // How often to check for updates (in minutes)
-    "DisableUpdates": false, // Completely disable update functionality
+    "DisableUpdates": true, // Completely disable update functionality
 
     // API settings for local client API
     "APIIP": "127.0.0.1", // IP address for the local API server
@@ -100,15 +103,15 @@ Do do not copy this config, tunnels does not support comments in the configurati
     "APIKey": "./api.key", // Path to API server private key
     "APICertDomains": ["tunnels.app", "app.tunnels.is"], // Domains to include in API certificate
     "APICertIPs": ["127.0.0.1", "0.0.0.0"], // IP addresses to include in API certificate
-    "APICertType": 0, // Certificate type (0 = self-signed, 1 = Let's Encrypt)
+    "APICertType": 0, // Certificate key type (0 = RSA, 1 = ECDSA)
 
     // Generic settings
     "DisableDNS": false, // Completely disable DNS functionality
 
     // Logging settings
-    "LogBlockedDomains": false, // Log domains that are blocked by DNS blocklists
-    "LogAllDomains": false, // Log all DNS queries (generates large logs)
-    "DebugLogging": false, // Enable debug level logging
+    "LogBlockedDomains": true, // Log domains that are blocked by DNS blocklists
+    "LogAllDomains": true, // Log all DNS queries (generates large logs)
+    "DebugLogging": true, // Enable debug level logging
     "DeepDebugLoggin": false, // Enable very verbose debug logging
     "ConsoleLogging": false, // Output logs to console
     "InfoLogging": true, // Enable info level logging
@@ -120,7 +123,7 @@ Do do not copy this config, tunnels does not support comments in the configurati
     "DNS1Default": "1.1.1.1", // Primary default DNS server
     "DNS2Default": "8.8.8.8", // Secondary default DNS server
     "DNSOverHTTPS": false, // Use DNS over HTTPS for upstream queries
-    "DNSstats": false, // Enable DNS statistics collection
+    "DNSstats": true, // Enable DNS statistics collection
     "DNSServerIP": "127.0.0.1", // IP address for local DNS server
     "DNSServerPort": "53", // Port for local DNS server
 
@@ -147,8 +150,7 @@ Do do not copy this config, tunnels does not support comments in the configurati
             "Domain": "example.com",
             "Wildcard": false, // Allow subdomain matching (*.example.com)
             "IP": ["10.0.0.100"], // `A` record responses
-            "TXT": [], // `TXT` record responses
-            "CNAME": "" // `CNAME` record response
+            "TXT": [] // `TXT` record responses
         }
     ]
 }
@@ -174,7 +176,7 @@ Do do not copy this config, tunnels does not support comments in the configurati
         "ControlServerID": "tunnels",
         "DeviceID": "",
         "ServerID": "",
-        "SendStats": true,
+        "SendStats": false,
         "PinVersion": false,
         "SkipUpdatePrompt": false
     },
@@ -183,7 +185,7 @@ Do do not copy this config, tunnels does not support comments in the configurati
     "RestartPostUpdate": false,
     "UpdateWhileConnected": false,
     "UpdateCheckInterval": 1440,
-    "DisableUpdates": false,
+    "DisableUpdates": true,
     "APIIP": "127.0.0.1",
     "APIPort": "7777",
     "APICert": "./api.crt",
@@ -192,9 +194,9 @@ Do do not copy this config, tunnels does not support comments in the configurati
     "APICertIPs": ["127.0.0.1", "0.0.0.0"],
     "APICertType": 0,
     "DisableDNS": false,
-    "LogBlockedDomains": false,
-    "LogAllDomains": false,
-    "DebugLogging": false,
+    "LogBlockedDomains": true,
+    "LogAllDomains": true,
+    "DebugLogging": true,
     "DeepDebugLoggin": false,
     "ConsoleLogging": false,
     "InfoLogging": true,
@@ -204,7 +206,7 @@ Do do not copy this config, tunnels does not support comments in the configurati
     "DNS1Default": "1.1.1.1",
     "DNS2Default": "8.8.8.8",
     "DNSOverHTTPS": false,
-    "DNSstats": false,
+    "DNSstats": true,
     "DNSServerIP": "127.0.0.1",
     "DNSServerPort": "53",
     "DNSBlockLists": [],

@@ -47,13 +47,33 @@ description: Download, Extract, Run.
    ./tunnels --config
    ```
 
+   This generates a `config.json`, TLS certificates (`cert.pem`, `key.pem`), and starts the server.
+
 :::danger
 
-The default user/pass for tunnels server will be randomly generated on first start.
+The admin username is `admin` and the password is randomly generated on first start. The password is printed to the server logs. You must set up two-factor authentication before you can reset the password through the client GUI.
 
-Do not open any ports to the server before changing the password using the password reset functionality from the client GUI
+Do not open any ports to the server before changing the password.
 
 :::
+
+---
+
+# Available CLI Flags
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--version` | Show version and exit | - |
+| `--config` | Generate config and certificates, then start the server | `false` |
+| `--configPath <path>` | Path to config file (supports .json, .yaml, .yml) | `./config.json` |
+| `--certs` | Generate certificates only and exit | `false` |
+| `--admin <identifier>` | Add an admin identifier to NetAdmins | - |
+| `--logLevel <level>` | Set log level: debug, info, warn, error | `debug` |
+| `--json` | Enable JSON structured logging | `true` |
+| `--source` | Disable source line information in logs | `false` |
+| `--silent` | Disable all logging | `false` |
+
+---
 
 4. **Inspect the configuration**
    ```bash
