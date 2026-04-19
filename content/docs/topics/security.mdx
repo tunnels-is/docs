@@ -7,7 +7,7 @@ description: Security architecture and implementation details
 
 # Security Architecture
 
-Tunnels.is implements a multi-layered security architecture with post-quantum cryptography, certificate-based authentication, and zero-knowledge principles.
+Tunnels.is implements a multi-layered security architecture with post-quantum cryptography, certificate-based authentication, and device-token authorization.
 
 ---
 
@@ -19,24 +19,21 @@ Tunnels.is supports two deployment models:
 
 **Single Server (AUTH + VPN Combined)**
 ```md
-Server with `CertPem`/`KeyPem`
-├─ `PrivKey`: Signs connection requests
-└─ `SignKey` = `PubKey`: Verifies own signatures
+Single server handles both authentication and VPN tunneling.
+Clients authenticate and connect to VPN on the same server.
 ```
-
-A single server handles both authentication and VPN tunneling. The server signs connection requests with its private key (`PrivKey`) and verifies them with its own public key (`SignKey = PubKey`).
 
 **Distributed (Separate Control and VPN Servers)**
 ```md
-Control Server: `CertPem`/`KeyPem`
-└─ `PrivKey`: Signs connection requests
+Control Server: CertPem/KeyPem
+- Handles user authentication and management
 
 VPN Server:
-├─ Own `CertPem`/`KeyPem`: `TLS` connections
-└─ `SignPem`: control server's public key for verification
+- Own CertPem/KeyPem: TLS connections
+- SignPem: control server's public key for verification
 ```
 
-The control server handles authentication and signs connection approvals. VPN servers receive these signed approvals and verify them using the control server's public key (loaded from `SignPem`).
+The control server manages all users, devices, and groups. VPN servers handle tunnel traffic and validate user connections using signatures from the control server.
 
 ### Certificates and Keys
 
@@ -45,106 +42,83 @@ The system uses PEM-encoded certificates and keys:
 #### CertPem & KeyPem - Server Identity
 
 ```md
-`CertPem`: Public certificate for `TLS`/`HTTPS`
-`KeyPem`: Private key for `TLS` and signing connection requests
-Algorithms: `ECDSA P-521` (auto-generated) or `RSA-4096` (user-provided)
+CertPem: Public certificate for TLS/HTTPS
+KeyPem: Private key for TLS
+Algorithms: ECDSA P-521 (auto-generated) or RSA-4096 (user-provided)
 Validity: 10 years (configurable)
 ```
-
-The private key (`PrivKey`) from KeyPem is used by the control server to cryptographically sign connection approvals.
 
 #### SignPem - Control Server Verification
 
 ```md
-Purpose: `VPN` server verifies control server signatures
+Purpose: VPN server verifies control server signatures
 Content: control server's public key/certificate
-Used When: Control and `VPN` are separate servers
-Loading: `VPN` server loads this at startup via `crypt.LoadPublicKey(SignPem)` in `server/main.go`
+Used When: Control and VPN are separate servers
 ```
 
-In single-server mode, `SignKey = PubKey` (verifies own signatures). In distributed mode, `SignKey` is loaded from SignPem (verifies control server's signatures).
+In single-server mode, the server uses its own key pair for both TLS and signature verification. In distributed mode, `SignPem` holds the control server's certificate.
 
 #### Certificate Distribution
 
-Server certificates are distributed through the control database:
-
-```go
-// server/main.go
-func initializeNewServer() error {
-    keyBytes := os.ReadFile(c.CertPem)
-    return DB_CreateServer(&types.Server{
-        PubKey: string(keyBytes),  // Certificate stored in database
-        // ...
-    })
-}
-```
+Server certificates are distributed through the control database. When a server entry is created in the admin UI, the server's `CertPem` contents are stored alongside the server record.
 
 **Distribution Flow:**
 
 ```md
-1. `VPN` server stores its `CertPem` in control database's `Server.PubKey` field
-2. Client queries control server for available `VPN` servers
+1. Admin creates a VPN server entry in the control database and provides the server's certificate
+2. Client queries control server for available VPN servers
 3. Client receives server certificate and pins it
-4. Client uses pinned certificate for all `TLS` connections
+4. Client uses pinned certificate for all TLS connections
 ```
 
 This eliminates the need for a certificate authority. Each VPN server's certificate is directly pinned by clients through the trusted control server.
 
 ### Cryptographic Primitives
 
-#### Post-Quantum Hybrid Key Exchange
+#### Post-Quantum TLS
 
-The system combines classical and post-quantum cryptography:
+All HTTPS API connections use TLS 1.3 with a post-quantum hybrid key exchange:
 
 ```md
-- `X25519`: Elliptic curve Diffie-Hellman (128-bit classical security)
-- `TLS` layer: `X25519MLKEM768` hybrid key exchange (ML-KEM-768)
-- Tunnel data channel: `ML-KEM-1024` key encapsulation (192-bit quantum security)
+- TLS layer: X25519MLKEM768 hybrid key exchange (ML-KEM-768 + X25519)
+- Both client and server prefer X25519MLKEM768 in their TLS configuration
+- Provides security against both classical and quantum computers
 ```
 
-Both classical and post-quantum algorithms run in parallel. The TLS handshake uses ML-KEM-768 via the `X25519MLKEM768` curve preference, while the tunnel data encryption uses ML-KEM-1024. The final shared secret combines outputs from both, providing security against both classical and quantum computers.
-
-#### AEAD Ciphers
-
-Three authenticated encryption options:
+The server TLS config (`server/main.go`):
 
 ```go
-// crypt/main.go
-const (
-    AES128    // AES-128-GCM
-    AES256    // AES-256-GCM
-    CHACHA20  // XChaCha20-Poly1305 (default for new tunnels)
-)
+APITLSConfig.Store(&tls.Config{
+    MinVersion:       tls.VersionTLS13,
+    CurvePreferences: []tls.CurveID{tls.X25519MLKEM768},
+    Certificates:     apiCerts,
+})
 ```
 
-The default encryption for new tunnel connections is XChaCha20-Poly1305 (the extended nonce variant with 24-byte nonces). All three options provide authenticated encryption with associated data (AEAD), ensuring both confidentiality and integrity.
-
-#### Key Derivation
-
-Keys are derived using HKDF with SHA-512:
+The client HTTP transport (`client/api.go`):
 
 ```go
-// crypt/main.go
-func (S *SEAL) HKDF(keySize int, sharedSecret []byte) error {
-    h := hkdf.New(sha512.New, sharedSecret, nil, nil)
-    io.ReadFull(h, S.key1)  // Client→Server encryption
-    io.ReadFull(h, S.key2)  // Server→Client encryption
-    return nil
+client.Transport = &http.Transport{
+    TLSClientConfig: &tls.Config{
+        MinVersion:         tls.VersionTLS13,
+        CurvePreferences:   []tls.CurveID{tls.X25519MLKEM768},
+        InsecureSkipVerify: !skipVerify,
+    },
 }
 ```
 
-Each direction uses an independent key derived from the shared secret.
+#### Tunnel Encryption
 
-#### Digital Signatures
+VPN tunnel traffic is encrypted by WireGuard:
 
-Connection requests are signed using:
-
+```md
+- Key exchange: Curve25519 ECDH (ephemeral per-session)
+- Data encryption: ChaCha20-Poly1305 AEAD
+- Handshake: Noise protocol framework (IKpsk2)
+- Implementation: golang.zx2c4.com/wireguard
 ```
-- RSA: 4096-bit keys with PSS padding and SHA-256
-- ECDSA: P-521 curve with SHA-256
-```
 
-Signature algorithms in `crypt/keys.go` support both schemes.
+WireGuard handles all tunnel cryptography once the client and server are configured with each other's public keys.
 
 ---
 
@@ -158,16 +132,16 @@ User registration (`server/handlers.go`):
 
 ```md
 - Password requirements: 10-200 characters
-- Password hashing: `bcrypt` with cost factor 13
-- Device token: `UUID`-based per-device identifier
+- Password hashing: bcrypt with cost factor 13
+- Device token: UUID-based per-device identifier
 - Trial period: Automatic 1-day trial for new users
 ```
 
 User login (`server/handlers.go`):
 
 ```md
-1. Password verification via `bcrypt` comparison
-2. `TOTP`-based two-factor authentication
+1. Password verification via bcrypt comparison
+2. TOTP-based two-factor authentication
 3. Device token generation (unique per device)
 4. Sensitive data removed from response
 ```
@@ -175,102 +149,10 @@ User login (`server/handlers.go`):
 #### Two-Factor Authentication
 
 ```md
-Algorithm: `TOTP` (Time-Based One-Time Password)
-Library: `github.com/xlzd/gotp`
+Algorithm: TOTP (Time-Based One-Time Password)
+Library: github.com/xlzd/gotp
 Backup Codes: Recovery codes for account access
-Server Secret: Configured via `TwoFactorKey` setting
-```
-
-### Request Signing and Verification
-
-#### Control Server Signing
-
-After authentication, the control server signs connection requests (`server/handlers.go`):
-
-```go
-func API_SessionCreate(w http.ResponseWriter, r *http.Request) {
-    // 1. Receive connection request
-    CR := new(types.ControllerConnectRequest)
-
-    // 2. Authenticate user via device token
-    user := authenticateUserFromEmailOrIDAndToken("", CR.UserID, CR.DeviceToken)
-
-    // 3. Check authorization (user groups, server access)
-
-    // 4. Sign the request
-    SCR := new(types.SignedConnectRequest)
-    CR.Created = time.Now()
-    SCR.Payload = json.Marshal(CR)
-    SCR.Signature = crypt.SignData(SCR.Payload, PrivKey)
-
-    // 5. Return signed request to client
-}
-```
-
-The control server signs with `PrivKey` (from its KeyPem), creating a cryptographic proof that this connection was authorized.
-
-#### VPN Server Verification
-
-The VPN server verifies the signature (`server/handlers.go`):
-
-```go
-func API_AcceptUserConnections(w http.ResponseWriter, r *http.Request) {
-    // 1. Receive signed request from client
-    SCR := new(types.SignedConnectRequest)
-    json.Unmarshal(body, &SCR)
-
-    // 2. Verify control server's signature
-    err = crypt.VerifySignature(SCR.Payload, SCR.Signature, SignKey)
-
-    // 3. Validate request freshness (< 4 minutes old)
-    if time.Since(CR.Created).Seconds() > 240 {
-        return 401
-    }
-
-    // 4. Check connection limits
-
-    // 5. Initialize encryption and sign response
-    CRR.ServerHandshakeSignature = crypt.SignData(CRR.X25519Pub, PrivKey)
-}
-```
-
-`SignKey` contains the control server's public key:
-
-```md
-- Single server: `SignKey` = `PubKey` (own public key)
-- Distributed: `SignKey` = `LoadPublicKey(SignPem)` (control server's public key)
-```
-
-Request freshness validation prevents replay attacks by rejecting requests older than 4 minutes.
-
-### Server Identity Verification
-
-Clients verify server identity using certificate pinning and signature verification (`client/session.go`):
-
-```go
-// 1. Load pinned server certificate
-tc := &tls.Config{
-    MinVersion:       tls.VersionTLS13,
-    CurvePreferences: []tls.CurveID{tls.X25519MLKEM768},
-}
-tc.RootCAs = tunnel.LoadCertPEMBytes([]byte(ServerPubKey))
-
-// 2. Verify server's handshake signature
-pubKey := crypt.LoadPublicKeyBytes([]byte(ServerPubKey))
-err = crypt.VerifySignature(
-    ServerResponse.X25519Pub,
-    ServerResponse.ServerHandshakeSignature,
-    pubKey,
-)
-```
-
-**Security Properties:**
-
-```md
-- Certificate pinning prevents man-in-the-middle attacks
-- No certificate authorities required (direct trust model)
-- Out-of-band certificate distribution through control database
-- Cryptographic proof of server identity via signature
+Server Secret: Configured via TwoFactorKey setting
 ```
 
 ---
@@ -280,212 +162,55 @@ err = crypt.VerifySignature(
 ### Handshake Protocol
 
 ```md
-[Client]              [Control Server]        [VPN Server]
-   |                        |                       |
-   |--1. POST /v3/session-->|                       |
-   |   (`DeviceToken`, `UID`,   |                   |
-   |    `ServerID`, `EncType`)  |                   |
-   |                        |                       |
-   |              [Authenticate & Sign]             |
-   |                        |                       |
-   |<--2. Signed Response---|                       |
-   |   (`Signature`, `Payload`) |                   |
-   |   [Add `X25519` + `MLKEM`] |                   |
-   |                        |                       |
-   |--3. POST /v3/connect-------------------------->|
-   |   (Signed Request +                            |
-   |    `X25519PeerPub` +                           |
-   |    `Mlkem1024Encap`)                           |
-   |                        |                       |
-   |                        |         [Verify Signature]
-   |                        |         [Key Exchange]
-   |                        |                       |
-   |<--4. Server Response---------------------------|
-   |   (`X25519Pub`, `MLKEMCipher`,                 |
-   |    `ServerHandshakeSignature`)                 |
-   |                        |                       |
-   |   [Verify & Finalize]  |                       |
-   |                        |                       |
-   |--5. `UDP` Encrypted Data---------------------->|
-   |<--6. `UDP` Encrypted Data----------------------|
+[Client]                    [Server]
+   |                            |
+   |--1. POST /client/user/login→|
+   |   (email, password, TOTP)  |
+   |                            |
+   |           [Authenticate]   |
+   |                            |
+   |←--2. DeviceToken ----------|
+   |                            |
+   |--3. GET /client/wg/config->|
+   |   Headers:                 |
+   |     X-Device-Token         |
+   |     X-UID                  |
+   |   Query:                   |
+   |     serverID, pubKey       |
+   |                            |
+   |    [Verify Token,          |
+   |     Lookup Device WG IP]   |
+   |                            |
+   |←--4. WireGuard Config -----|
+   |   (WireGuardPubKey,        |
+   |    WireGuardPort,          |
+   |    ServerIP,               |
+   |    WireGuardIP)            |
+   |                            |
+   |--5. WireGuard Handshake--->|
+   |←--6. WireGuard Handshake--|
+   |                            |
+   |--7. Encrypted WG Traffic-->|
+   |←--8. Encrypted WG Traffic-|
 ```
 
 **Key Security Steps:**
 
 ```md
-- Step 2: Control server signs with its `PrivKey`
-- Step 3: `VPN` verifies with `SignKey` (from `SignPem` or own `PubKey`)
-- Step 4: `VPN` signs response with its own `PrivKey`
-- Step 4: Client verifies `VPN` signature with pinned `ServerPubKey`
+- Step 1: bcrypt password verification + TOTP 2FA
+- Step 2: UUID device token issued per device
+- Step 3: Device token + UID authenticate the WG config request
+- Steps 5-6: WireGuard Noise protocol handshake (Curve25519 ECDH)
+- Steps 7-8: WireGuard ChaCha20-Poly1305 encrypted tunnel traffic
 ```
 
-### Key Exchange
+### WireGuard Key Management
 
-#### Client Initialization
-
-The client generates ephemeral keys (`crypt/main.go`):
-
-```go
-func (T *SocketWrapper) InitializeClient() error {
-    // Generate X25519 keypair
-    T.SEAL.X25519Priv = ecdh.X25519().GenerateKey(rand.Reader)
-    T.SEAL.X25519Pub = T.SEAL.X25519Priv.PublicKey()
-
-    // Generate ML-KEM-1024 keypair
-    T.SEAL.Mlkem1024Decap = mlkem.GenerateKey1024()
-    T.SEAL.Mlkem1024Encap = T.SEAL.Mlkem1024Decap.EncapsulationKey()
-
-    return nil
-}
-```
-
-The client sends `X25519Pub` (32 bytes) and `Mlkem1024Encap` (~1568 bytes) to the server.
-
-#### Server Processing
-
-The server generates its own keys and creates shared secrets (`crypt/main.go`):
-
-```go
-func (T *SocketWrapper) InitializeServer(X25519PeerPub, Mlkem1024Encap []byte) error {
-    // Generate server's X25519 keypair
-    T.SEAL.X25519Priv = ecdh.X25519().GenerateKey(rand.Reader)
-    T.SEAL.X25519Pub = T.SEAL.X25519Priv.PublicKey()
-
-    // Import client's keys
-    T.SEAL.X25519PeerPub = ecdh.X25519().NewPublicKey(X25519PeerPub)
-    T.SEAL.Mlkem1024Encap = mlkem.NewEncapsulationKey1024(Mlkem1024Encap)
-
-    return T.FinalizeServer()
-}
-
-func (T *SocketWrapper) FinalizeServer() error {
-    // X25519 shared secret
-    nk := T.SEAL.X25519Priv.ECDH(T.SEAL.X25519PeerPub)
-    s1 := sha256.Sum256(nk)
-
-    // ML-KEM encapsulation
-    s2, cipherText := T.SEAL.Mlkem1024Encap.Encapsulate()
-    T.SEAL.Mlkem1024Cipher = cipherText
-
-    // Combine secrets with public keys
-    fss := s1 + s2 + X25519PeerPub + X25519Pub
-
-    return T.SEAL.CreateAEAD(fss)
-}
-```
-
-The server sends `X25519Pub` (32 bytes) and `Mlkem1024Cipher` (~1568 bytes) to the client.
-
-#### Client Finalization
-
-The client completes key agreement (`crypt/main.go`):
-
-```go
-func (T *SocketWrapper) FinalizeClient(X25519PeerPub, Mlkem1024Cipher []byte) error {
-    // Import server's public key
-    T.SEAL.X25519PeerPub = ecdh.X25519().NewPublicKey(X25519PeerPub)
-
-    // X25519 shared secret (same as server)
-    nk := T.SEAL.X25519Priv.ECDH(T.SEAL.X25519PeerPub)
-    s1 := sha256.Sum256(nk)
-
-    // ML-KEM decapsulation
-    s2 := T.SEAL.Mlkem1024Decap.Decapsulate(Mlkem1024Cipher)
-
-    // Combine secrets (same order as server)
-    fss := s1 + s2 + X25519Pub + X25519PeerPub
-
-    return T.SEAL.CreateAEAD(fss)
-}
-```
-
-Both parties now have the same final shared secret (`fss`), which includes:
+Each client device stores a persistent WireGuard private key (`WireGuardPrivKey` in the tunnel config). The corresponding public key is sent to the server during the `GET /client/wg/config` request (`pubKey` query parameter). The server matches the public key to the device record and returns the device's assigned `WireGuardIP`.
 
 ```md
-- `X25519` `ECDH` output (classical security)
-- `ML-KEM` shared secret (quantum security)
-- Both public keys (key confirmation)
+- Client private key: generated once, stored in tunnel config
+- Client public key: derived from private key, registered on server
+- Server public key: fetched from server via /client/wg/config
+- WireGuard IP: assigned per-device by the server administrator
 ```
-
-#### Memory Cleanup
-
-After key derivation, sensitive material is zeroed (`crypt/main.go`):
-
-```go
-func (S *SEAL) CleanPostSecretGeneration() {
-    S.Mlkem1024Cipher = nil
-    S.Mlkem1024Decap = nil
-    S.Mlkem1024Encap = nil
-    S.X25519PeerPub = nil
-    S.X25519Pub = nil
-    S.X25519Priv = nil
-    S.key1 = nil
-    S.key2 = nil
-}
-```
-
-This cleanup is called on both client (`client/session.go`) and server (`server/handlers.go`) after the handshake completes.
-
-### Tunnel Encryption
-
-#### Packet Format
-
-Each encrypted packet follows this structure:
-
-```md
-[2-byte index][8-byte nonce][encrypted payload + 16-byte auth tag]
-```
-
-```md
-- Index: Client identifier (0-65535)
-- Nonce: Packet sequence number (counter)
-- Payload: Original `IP` packet (encrypted)
-- Auth Tag: `AEAD` authentication tag
-```
-
-#### Encryption Process
-
-Packets are encrypted with monotonically increasing nonces (`crypt/main.go`):
-
-```go
-func (S *SEAL) Seal1(data []byte, index []byte) []byte {
-    // Atomic nonce increment
-    n := make([]byte, S.Nonce1Len)
-    binary.BigEndian.PutUint64(n, S.Nonce1U.Add(1))
-
-    // Prepend index and nonce
-    out := []byte{index[0], index[1], n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7]}
-
-    // AEAD encryption (index as additional authenticated data)
-    out = S.AEAD1.Seal(out, n, data, index)
-
-    return out
-}
-```
-
-**Security Properties:**
-
-```md
-- Unique nonce per packet (atomic counter prevents reuse)
-- Index authenticated but not encrypted (`AAD`)
-- Integrity and authenticity via `AEAD`
-- Forward secrecy (compromising keys doesn't expose past sessions)
-```
-
-#### Decryption Process
-
-Decryption verifies authenticity (`crypt/main.go`):
-
-```go
-func (S *SEAL) Open1(data []byte, nonce []byte, staging []byte, index []byte) ([]byte, error) {
-    n := make([]byte, S.Nonce1Len)
-    copy(n, nonce)
-
-    // AEAD decryption with index verification
-    decrypted, err := S.AEAD1.Open(staging, n, data, index)
-
-    return decrypted, err
-}
-```
-
-The authentication tag is checked during decryption. Tampered packets are rejected.

@@ -14,18 +14,18 @@ Follow [this guide](/docs/server/installation) to install the server on a linux 
 
 ```md
 1. Use the [Linux server setup guide](/docs/server/linux-configurations) to configure your server.
-2. Set `LocalNetworkAccess` to `true`. This enables `VPN` access to all local networks.
-3. (Optional) You can turn off internet access by setting `InternetAccess` to `false`
+2. Add the local network routes you want clients to access to the `Routes` array in your server config.
+3. See the [server config guide](/docs/server/config) for full configuration reference.
 ```
 
 ---
 
 # Configure Your Router
-If you want to connect to your homelab from outside of your home, you will need to open a port on your router to the configured `VPNPort` and `APIPort` in your server config.
+If you want to connect to your homelab from outside of your home, you will need to open a port on your router to the configured `APIPort` in your server config.
 
 :::note
 
-`VPNPort` and `APIPort` can both share the same value.   
+The server uses `APIPort` for both API calls and VPN connections.
 
 :::
 

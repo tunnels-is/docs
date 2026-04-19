@@ -30,7 +30,7 @@ Tunnels uses the following directory structure:
 |------|-------------|---------|
 | `--version` | Show version and exit | - |
 | `--basePath <path>` | Directory for config and log files | Executable directory |
-| `--tunnelType <type>` | Tunnel type: `default`, `strict`, or `iot` | `default` |
+| `--tunnelType <type>` | Tunnel type: `default` or `iot` | `default` |
 | `--debug` | Enable debug logging | `false` |
 | `--requireConfig` | Exit if config file is missing (don't auto-generate) | `false` |
 | `--tls` | Enable TLS for the local API server (HTTPS) | `false` |
@@ -81,7 +81,8 @@ Do do not copy this config, tunnels does not support comments in the configurati
     // CLI specific configuration (only used in CLI mode)
     "CLIConfig": {
         "ControlServerID": "tunnels", // Which control server to use from ControlServers list
-        "DeviceID": "", // User API key or device key
+        "DeviceToken": "", // Device authentication token
+        "UserID": "", // User ID (alternative to DeviceToken)
         "ServerID": "", // Default server to connect to
         "SendStats": false, // Enable/Disable sending statistics to server
         "PinVersion": false, // Lock to a specific client version
@@ -110,14 +111,15 @@ Do do not copy this config, tunnels does not support comments in the configurati
 
     // Logging settings
     "LogBlockedDomains": true, // Log domains that are blocked by DNS blocklists
+    "LogBlockedPorts": false, // Log ports that are blocked
     "LogAllDomains": true, // Log all DNS queries (generates large logs)
     "DebugLogging": true, // Enable debug level logging
-    "DeepDebugLoggin": false, // Enable very verbose debug logging
     "ConsoleLogging": false, // Output logs to console
     "InfoLogging": true, // Enable info level logging
     "ErrorLogging": true, // Enable error level logging
     "ConsoleLogOnly": false, // Only log to console, not to file
     "ConnectionTracer": false, // Enable detailed connection tracing (for debugging)
+    "BandwidthGraphs": true, // Track per-second bandwidth history for graphs
 
     // DNS settings
     "DNS1Default": "1.1.1.1", // Primary default DNS server
@@ -174,7 +176,8 @@ Do do not copy this config, tunnels does not support comments in the configurati
     "DisableBlockLists": false,
     "CLIConfig": {
         "ControlServerID": "tunnels",
-        "DeviceID": "",
+        "DeviceToken": "",
+        "UserID": "",
         "ServerID": "",
         "SendStats": false,
         "PinVersion": false,
@@ -195,14 +198,15 @@ Do do not copy this config, tunnels does not support comments in the configurati
     "APICertType": 0,
     "DisableDNS": false,
     "LogBlockedDomains": true,
+    "LogBlockedPorts": false,
     "LogAllDomains": true,
     "DebugLogging": true,
-    "DeepDebugLoggin": false,
     "ConsoleLogging": false,
     "InfoLogging": true,
     "ErrorLogging": true,
     "ConsoleLogOnly": false,
     "ConnectionTracer": false,
+    "BandwidthGraphs": true,
     "DNS1Default": "1.1.1.1",
     "DNS2Default": "8.8.8.8",
     "DNSOverHTTPS": false,

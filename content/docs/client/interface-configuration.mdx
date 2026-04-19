@@ -28,30 +28,6 @@ Basic identifiers for the tunnel interface.
 
 ---
 
-# IP Address Configuration
-
-Configure IPv4 and IPv6 addresses for the tunnel interface.
-
-### Configuration
-
-```json
-{
-  "IPv4Address": "172.22.22.1",
-  "IPv6Address": "fd00:1234:5678::1",
-  "NetMask": "255.255.255.255"
-}
-```
-
-**Fields**:
-
-| Field | Type | Description | Default |
-|-------|------|-------------|---------|
-| `IPv4Address` | string | IPv4 address for tunnel | `"172.22.22.1"` |
-| `IPv6Address` | string | IPv6 address for tunnel (optional) | Auto-generated as `fd00::/8` |
-| `NetMask` | string | Network mask for IPv4 | `"255.255.255.255"` |
-
----
-
 # Performance Settings
 
 Configure MTU and transmit queue length for network performance.
@@ -81,30 +57,6 @@ Configure MTU and transmit queue length for network performance.
 
 ---
 
-# Encryption
-
-Configure the encryption algorithm for tunnel traffic.
-
-### Configuration
-
-```json
-{
-  "EncryptionType": 3
-}
-```
-
-**Encryption Types**:
-
-| Value | Algorithm | Description |
-|-------|-----------|-------------|
-| `1` | AES128 | 128-bit AES encryption |
-| `2` | AES256 | 256-bit AES encryption |
-| `3` | ChaCha20 | XChaCha20-Poly1305 (recommended, default) |
-
-**Default**: `3` (ChaCha20)
-
----
-
 # Connection Behavior
 
 Configure auto-connection and reconnection settings.
@@ -115,7 +67,6 @@ Configure auto-connection and reconnection settings.
 {
   "AutoConnect": false,
   "AutoReconnect": true,
-  "RequestVPNPorts": true,
   "KillSwitch": true
 }
 ```
@@ -126,13 +77,12 @@ Configure auto-connection and reconnection settings.
 |-------|------|-------------|---------|
 | `AutoConnect` | bool | Auto-connect on startup | `false` |
 | `AutoReconnect` | bool | Auto-reconnect on disconnection | `true` |
-| `RequestVPNPorts` | bool | This tells tunnels to request standard VPN ports (not needed for the `LAN` feature) | `true` |
-| `KillSwitch` | bool | Prevents tunnels from restoring default routing on disconncetion | `true` |
+| `KillSwitch` | bool | Prevents tunnels from restoring default routing on disconnection | `true` |
 
 ---
 
 # LocalHost NAT Configuration
-This feature will allow you to reach the VPN servers localhost address by remapping the servers IP to 12 
+This feature will allow you to reach the VPN servers localhost address by remapping the servers IP to 12
 
 ### Configuration
 
@@ -140,36 +90,6 @@ This feature will allow you to reach the VPN servers localhost address by remapp
 {
   "LocalhostNat": true
 }
-```
-
----
-
-# Firewall & Access Control
-
-Configure VPL (Virtual Private LAN) firewall rules.
-
-### Configuration
-
-```json
-{
-  "AllowedHosts": ["192.168.1.1", "example.com"],
-  "DisableFirewall": false
-}
-```
-
-**Fields**:
-
-| Field | Type | Description | Default |
-|-------|------|-------------|---------|
-| `AllowedHosts` | []string | List of allowed hosts/IPs | `null` |
-| `DisableFirewall` | bool | Disable VPL firewall rules | `false` |
-
-**AllowedHosts Format**:
-
-```md
-- IP addresses: `"192.168.1.1"`, `"10.0.0.50"`
-- Hostnames: `"example.com"`, `"api.internal"`
-- Empty array or `null` allows all hosts
 ```
 
 ---
@@ -313,6 +233,26 @@ Configure LAN networks accessible through this tunnel.
 | `Networks` | []Network | Array of LAN networks accessible via this tunnel |
 | `Network.Tag` | string | Identifier for the network |
 | `Network.Network` | string | Network in CIDR notation |
+
+---
+
+# Port Blocking
+
+Block specific TCP/UDP ports from being forwarded through the tunnel.
+
+### Configuration
+
+```json
+{
+  "BlockedPorts": [25, 445, 3389]
+}
+```
+
+**Fields**:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `BlockedPorts` | []uint16 | Array of port numbers to block |
 
 ---
 
@@ -543,24 +483,19 @@ When a DNS query is received, the tunnel resolves it in this order:
   "ServerID": "68320c5943239f6fd6da5cba",
   "Tag": "tunnels",
   "IFName": "tunnels",
-  "IPv4Address": "172.22.22.1",
-  "IPv6Address": "fd00:1234:5678::1",
-  "NetMask": "255.255.255.255",
   "MTU": 1420,
   "TxQueueLen": 2000,
-  "EncryptionType": 3,
   "AutoConnect": true,
   "AutoReconnect": true,
-  "RequestVPNPorts": true,
   "KillSwitch": true,
   "LocalhostNat": false,
   "DNSBlocking": true,
   "DNSServers": ["9.9.9.9"],
   "DNSRecords": [],
-  "AllowedHosts": [],
-  "DisableFirewall": false,
   "EnableDefaultRoute": true,
-  "Routes": []
+  "Routes": [],
+  "Networks": [],
+  "BlockedPorts": []
 }
 ```
 
@@ -571,24 +506,19 @@ When a DNS query is received, the tunnel resolves it in this order:
   "ServerID": "68320c5943239f6fd6da5cba",
   "Tag": "iot-sensor",
   "IFName": "iot-sensor",
-  "IPv4Address": "172.22.22.2",
-  "IPv6Address": "fd00:abcd:1234::1",
-  "NetMask": "255.255.255.255",
   "MTU": 1320,
   "TxQueueLen": 2000,
-  "EncryptionType": 3,
   "AutoConnect": true,
   "AutoReconnect": true,
-  "RequestVPNPorts": false,
   "KillSwitch": true,
   "LocalhostNat": true,
   "DNSBlocking": true,
   "DNSServers": [],
   "DNSRecords": [],
-  "AllowedHosts": ["192.168.1.1", "192.168.1.50"],
-  "DisableFirewall": false,
   "EnableDefaultRoute": false,
-  "Routes": []
+  "Routes": [],
+  "Networks": [],
+  "BlockedPorts": []
 }
 ```
 
@@ -599,15 +529,10 @@ When a DNS query is received, the tunnel resolves it in this order:
   "ServerID": "68320c5943239f6fd6da5cba",
   "Tag": "office",
   "IFName": "office",
-  "IPv4Address": "10.0.0.1",
-  "IPv6Address": "",
-  "NetMask": "255.255.255.0",
   "MTU": 1420,
   "TxQueueLen": 2000,
-  "EncryptionType": 2,
   "AutoConnect": false,
   "AutoReconnect": true,
-  "RequestVPNPorts": true,
   "KillSwitch": true,
   "LocalhostNat": false,
   "DNSBlocking": false,
@@ -626,16 +551,16 @@ When a DNS query is received, the tunnel resolves it in this order:
       "TXT": []
     }
   ],
-  "AllowedHosts": null,
-  "DisableFirewall": false,
   "EnableDefaultRoute": false,
   "Routes": [
     {
       "Address": "10.0.0.0/8",
       "Metric": "0",
       "Gateway": ""
-    },
-  ]
+    }
+  ],
+  "Networks": [],
+  "BlockedPorts": []
 }
 ```
 
@@ -670,7 +595,6 @@ Important relationships between configuration fields:
 **IoT Tunnel Constraints**:
 
 ```md
-- `RequestVPNPorts: false` (connect to WAN over LAN only)
 - `LocalhostNat: true` (map servers public IP to localhost for easy access)
 - `EnableDefaultRoute: false` (selective routing)
 ```
@@ -681,12 +605,4 @@ Important relationships between configuration fields:
 - `KillSwitch: true` + `AutoReconnect: false` → Blocks all traffic on disconnect
 - `KillSwitch: true` + `AutoReconnect: true` → Blocks traffic until reconnected
 - `KillSwitch: false` → Uses default gateway on disconnect
-```
-
-**Firewall Rules**:
-
-```md
-- `DisableFirewall: false` + `AllowedHosts: null` → No hosts allowed
-- `DisableFirewall: false` + `AllowedHosts: [...]` → Only listed hosts allowed
-- `DisableFirewall: true` → No firewall restrictions
 ```

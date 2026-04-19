@@ -25,9 +25,8 @@ iptables -P OUTPUT ACCEPT
 iptables -I INPUT -p tcp --dport 22 -j ACCEPT
 # Enable connection tracking
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-# Open traffic to the API and VPN ports (adjust to match your APIPort and VPNPort)
+# Open traffic to the API port (adjust to match your APIPort in config.json)
 iptables -I INPUT -p tcp --dport 443 -j ACCEPT
-iptables -I INPUT -p udp --dport 444 -j ACCEPT
 # Close the server off from incomming packets
 iptables -P INPUT DROP
 ```
@@ -45,7 +44,7 @@ The server automatically applies an iptables RST DROP rule on startup to prevent
 ### /etc/sysctl.conf
 ```bash
 # THIS PART IS REQUIRED
-# Must match StartPort and EndPort in the server config.json
+# Reserves the high port range for VPN use and restricts the OS from using it for outgoing connections
 # -----------------------------
 net.ipv4.ip_local_reserved_ports = 2000-65530
 net.ipv4.ip_local_port_range = 1024 1999
@@ -96,7 +95,7 @@ $ pacman -S supervisor
 ### /etc/supervisor/conf.d/tunnels.conf
 ```bash
 [program:tunnels]
-command=/opt/tunnels/tunnels
+command=/opt/tunnels/server
 
 autostart=true
 autorestart=true
