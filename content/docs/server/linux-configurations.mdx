@@ -27,6 +27,8 @@ iptables -I INPUT -p tcp --dport 22 -j ACCEPT
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 # Open traffic to the API port (adjust to match your APIPort in config.json)
 iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+# Open traffic to the VPN data port (adjust to match your VPNPort in config.json, default: 444)
+iptables -I INPUT -p udp --dport 444 -j ACCEPT
 # Close the server off from incomming packets
 iptables -P INPUT DROP
 ```
@@ -95,7 +97,7 @@ $ pacman -S supervisor
 ### /etc/supervisor/conf.d/tunnels.conf
 ```bash
 [program:tunnels]
-command=/opt/tunnels/server
+command=/opt/tunnels/tunnels
 
 autostart=true
 autorestart=true

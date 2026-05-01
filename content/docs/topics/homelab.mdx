@@ -21,13 +21,12 @@ Follow [this guide](/docs/server/installation) to install the server on a linux 
 ---
 
 # Configure Your Router
-If you want to connect to your homelab from outside of your home, you will need to open a port on your router to the configured `APIPort` in your server config.
+If you want to connect to your homelab from outside of your home, you will need to open ports on your router:
 
-:::note
-
-The server uses `APIPort` for both API calls and VPN connections.
-
-:::
+```md
+- `APIPort` (TCP, default 443) - Used for API/authentication calls
+- `VPNPort` (UDP, default 444) - Used for the VPN data tunnel
+```
 
 ---
 

@@ -109,16 +109,16 @@ client.Transport = &http.Transport{
 
 #### Tunnel Encryption
 
-VPN tunnel traffic is encrypted by WireGuard:
+VPN tunnel traffic uses a hybrid post-quantum encryption scheme built on the `crypt` package:
 
 ```md
-- Key exchange: Curve25519 ECDH (ephemeral per-session)
-- Data encryption: ChaCha20-Poly1305 AEAD
-- Handshake: Noise protocol framework (IKpsk2)
-- Implementation: golang.zx2c4.com/wireguard
+- Key exchange: X25519 ECDH + ML-KEM-1024 (hybrid post-quantum)
+- Data encryption: Configurable AEAD (AES-128-GCM, AES-256-GCM, or ChaCha20-Poly1305)
+- Signature verification: RSA-PSS or ECDSA (server handshake is signed)
+- Implementation: github.com/tunnels-is/tunnels/crypt
 ```
 
-WireGuard handles all tunnel cryptography once the client and server are configured with each other's public keys.
+The server and client derive shared secrets from both X25519 and ML-KEM-1024, combining them for the symmetric data encryption key.
 
 ---
 
@@ -162,36 +162,45 @@ Server Secret: Configured via TwoFactorKey setting
 ### Handshake Protocol
 
 ```md
-[Client]                    [Server]
-   |                            |
-   |--1. POST /client/user/login→|
-   |   (email, password, TOTP)  |
-   |                            |
-   |           [Authenticate]   |
-   |                            |
-   |←--2. DeviceToken ----------|
-   |                            |
-   |--3. GET /client/wg/config->|
-   |   Headers:                 |
-   |     X-Device-Token         |
-   |     X-UID                  |
-   |   Query:                   |
-   |     serverID, pubKey       |
-   |                            |
-   |    [Verify Token,          |
-   |     Lookup Device WG IP]   |
-   |                            |
-   |←--4. WireGuard Config -----|
-   |   (WireGuardPubKey,        |
-   |    WireGuardPort,          |
-   |    ServerIP,               |
-   |    WireGuardIP)            |
-   |                            |
-   |--5. WireGuard Handshake--->|
-   |←--6. WireGuard Handshake--|
-   |                            |
-   |--7. Encrypted WG Traffic-->|
-   |←--8. Encrypted WG Traffic-|
+[Client]                    [Control Server]               [VPN Server]
+   |                              |                              |
+   |--1. POST /v3/user/login ---->|                              |
+   |   (email, password, TOTP)    |                              |
+   |                              |                              |
+   |<--2. DeviceToken ------------|                              |
+   |                              |                              |
+   |--3. POST /v3/session ------->|                              |
+   |   (DeviceToken, UserID,      |                              |
+   |    ServerID, EncType)        |                              |
+   |                              |                              |
+   |      [Verify User,           |                              |
+   |       Sign Payload]          |                              |
+   |                              |                              |
+   |<--4. SignedConnectRequest ---|                              |
+   |   (Signature + Payload)      |                              |
+   |                              |                              |
+   |   [Generate X25519 +         |                              |
+   |    ML-KEM-1024 keys]         |                              |
+   |                              |                              |
+   |--5. POST /v3/connect --------|----(TLS)-------------------->|
+   |   (SignedRequest +            |                              |
+   |    X25519PeerPub +            |                              |
+   |    Mlkem1024Encap)            |                              |
+   |                              |     [Verify Signature,       |
+   |                              |      Init Encryption,        |
+   |                              |      Allocate Ports]         |
+   |                              |                              |
+   |<--6. ServerConnectResponse --|----(TLS)---------------------|
+   |   (X25519Pub, Mlkem1024Cipher,                              |
+   |    InterfaceIP, DataPort,                                   |
+   |    StartPort, EndPort,                                      |
+   |    Routes, DNS, Networks)                                   |
+   |                              |                              |
+   |   [Finalize Encryption,      |                              |
+   |    Create TUN Interface]     |                              |
+   |                              |                              |
+   |--7. Encrypted UDP Traffic ---|----(UDP DataPort)----------->|
+   |<--8. Encrypted UDP Traffic --|----(UDP DataPort)------------|
 ```
 
 **Key Security Steps:**
@@ -199,18 +208,39 @@ Server Secret: Configured via TwoFactorKey setting
 ```md
 - Step 1: bcrypt password verification + TOTP 2FA
 - Step 2: UUID device token issued per device
-- Step 3: Device token + UID authenticate the WG config request
-- Steps 5-6: WireGuard Noise protocol handshake (Curve25519 ECDH)
-- Steps 7-8: WireGuard ChaCha20-Poly1305 encrypted tunnel traffic
+- Step 3: Controller validates user authorization and signs the connect request
+- Step 4: Signed payload includes creation timestamp (240-second expiry)
+- Step 5: Client sends signed request + X25519/ML-KEM-1024 key material to VPN server
+- Step 6: VPN server verifies controller signature, performs key exchange, allocates ports
+- Steps 7-8: Symmetric AEAD-encrypted UDP traffic using derived keys
 ```
 
-### WireGuard Key Management
+### Key Exchange Details
 
-Each client device stores a persistent WireGuard private key (`WireGuardPrivKey` in the tunnel config). The corresponding public key is sent to the server during the `GET /client/wg/config` request (`pubKey` query parameter). The server matches the public key to the device record and returns the device's assigned `WireGuardIP`.
+The tunnel key exchange combines two algorithms for post-quantum security:
 
 ```md
-- Client private key: generated once, stored in tunnel config
-- Client public key: derived from private key, registered on server
-- Server public key: fetched from server via /client/wg/config
-- WireGuard IP: assigned per-device by the server administrator
+1. Client generates X25519 ephemeral keypair
+2. Client generates ML-KEM-1024 encapsulation
+3. Both are sent to VPN server alongside the signed connect request
+4. Server generates its own X25519 keypair and ML-KEM-1024 decapsulation
+5. Server signs its X25519 public key with its private key
+6. Both sides derive shared secrets from X25519 ECDH and ML-KEM-1024
+7. Shared secrets are combined to produce the symmetric encryption key
+8. Post-handshake: all key material is zeroed from memory
 ```
+
+---
+
+# WireGuard Mode (Optional)
+
+In addition to the native protocol, Tunnels supports WireGuard as a parallel VPN protocol via a separate `wg-server` binary. This allows standard WireGuard clients (Android, iOS, desktop) to connect without custom software.
+
+```md
+- WireGuard peers are managed through the `/v3/wg/*` API endpoints
+- The `wg-server` binary syncs peers from the controller every 30 seconds
+- Key exchange: Curve25519 ECDH (Noise protocol framework)
+- Data encryption: ChaCha20-Poly1305 AEAD
+```
+
+See the WireGuard integration guide for setup details.

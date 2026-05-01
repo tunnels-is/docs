@@ -29,10 +29,11 @@ Use the clean config below for copying, the server does not support comments in 
 ```json
 {
     "Features": [
+        "LAN", // Enables LAN (DHCP, firewall, device networking)
+        "VPN", // Enables raw-socket VPN (port allocation, data socket)
         "AUTH", // Enables the authentication control unit
         "DNS",  // Enables DNS features (reserved, not yet active at runtime)
-        "BBOLT", // Enables bbolt embedded database (recommended for most users)
-        "WG"   // Enables embedded WireGuard server (requires WG bootstrap config)
+        "BBOLT" // Enables bbolt embedded database (recommended for most users)
     ],
     "LogAPIHosts": false, // Enable logging of API client hostnames
 
@@ -40,11 +41,26 @@ Use the clean config below for copying, the server does not support comments in 
     "APIIP": "192.168.1.32", // The IP address used for API calls
     "APIPort": "443", // The port used for API calls
 
-    // VPN network IP (used for raw-socket VPN traffic and iptables RST DROP rule)
-    "VPNIP": "192.168.1.32",
+    // VPN Configuration
+    "VPNIP": "192.168.1.32", // VPN network IP (used for raw-socket VPN traffic and iptables RST DROP rule)
+    "VPNPort": "444", // The UDP port used for the VPN data socket
+
+    // Port Allocation (VPN feature)
+    // The server allocates port ranges per user from StartPort to EndPort
+    "StartPort": 2000, // Start of the port range for VPN connections
+    "EndPort": 65530, // End of the port range for VPN connections
+    "ServerBandwidthMbps": 1000, // Total server bandwidth in Mbps (used to calculate user slots)
+    "UserBandwidthMbps": 10, // Per-user bandwidth limit in Mbps
 
     // Client Connection Settings
     "UserMaxConnections": 10, // The maximum number of connections each client can have
+    "InternetAccess": true, // Allow clients to access the internet through the VPN
+    "LocalNetworkAccess": false, // Allow clients to access the server's local network
+    "DisableLanFirewall": false, // Disable the LAN firewall (VPL) for LAN-connected devices
+
+    // Timeout Settings
+    "PingTimeoutMinutes": 2, // How many minutes it takes to time out a client connection (minimum: 2)
+    "DHCPTimeoutHours": 1, // Hours before DHCP leases expire (minimum: 1)
 
     // DNS Configuration
     // Define custom DNS records that will be delivered to the client on connection
@@ -69,13 +85,12 @@ Use the clean config below for copying, the server does not support comments in 
     "CertPem": "./cert.pem", // Public certificate for this server (TLS + connection signing)
     "KeyPem": "./key.pem", // Private key for this server (TLS + connection signing)
     "CertPems": ["./cert.pem","./cert2.pem"], // Use this field to load additional certificates for the API
-    "KeyPems": ["./key.pem","./keyw.pem"], // Use this field to load additional certificates for the API
+    "KeyPems": ["./key.pem","./key2.pem"], // Use this field to load additional certificates for the API
     "SignPem": "./sign.pem", // Public signing certificate from the controller
     // This allows the server to validate that connection attempts have been processed by the correct control server
 
     // Administration and Management
     "Hostname": "tunnels.local", // Base hostname for this server
-    "PingTimeoutMinutes": 2, // How many minutes it takes to time out a client connection (minimum: 2)
     "NetAdmins": [], // bcrypt-hashed identifiers of network administrators (use --admin flag to add)
     "AdminAPIKey": "0cd1f6c4-9b98-4bda-860c-0c04f103c84d", // API key for administrative control server access
     "ClientVersion": "", // Enforce specific client version for all devices (empty = no enforcement)
@@ -101,12 +116,8 @@ Use the clean config below for copying, the server does not support comments in 
         }
     ],
 
-    // WireGuard bootstrap config (only required when WG feature is enabled)
-    "WG": {
-        "APIKey": "", // Per-server API key from the WireGuard server config
-        "ControllerURL": "", // Base URL of the controller (empty = self: https://APIIP:APIPort)
-        "InsecureSkipVerify": false // Disable TLS verification when calling the controller (testing only)
-    }
+    // WireGuard (optional, used by the separate wg-server binary)
+    "WireGuardSubnet": "" // Subnet for WireGuard IP assignment (e.g., "10.1.0.0/16")
 }
 ```
 
@@ -116,20 +127,32 @@ Use the clean config below for copying, the server does not support comments in 
 ```json
 {
     "Features": [
+        "LAN",
+        "VPN",
         "AUTH",
+        "DNS",
         "BBOLT"
     ],
     "PingTimeoutMinutes": 2,
+    "DHCPTimeoutHours": 1,
     "LogAPIHosts": false,
     "ClientVersion": "",
     "VPNIP": "192.168.1.32",
+    "VPNPort": "444",
     "APIIP": "192.168.1.32",
     "APIPort": "443",
+    "StartPort": 2000,
+    "EndPort": 65530,
+    "ServerBandwidthMbps": 1000,
+    "UserBandwidthMbps": 10,
+    "UserMaxConnections": 10,
+    "InternetAccess": true,
+    "LocalNetworkAccess": false,
+    "DisableLanFirewall": false,
     "NetAdmins": [],
     "Hostname": "tunnels.local",
     "Routes": [],
     "SubNets": [],
-    "UserMaxConnections": 10,
     "DNSRecords": [],
     "DNSServers": [],
     "SecretStore": "config",
@@ -138,9 +161,10 @@ Use the clean config below for copying, the server does not support comments in 
     "TwoFactorKey": "1f9890c7b1e94365ab8f65d0e3d41bb4",
     "PayKey": "",
     "CertPem": "./cert.pem",
-    "CertPems":[],
+    "CertPems": [],
     "SignPem": "./sign.pem",
     "KeyPem": "./key.pem",
-    "KeyPems":[]
+    "KeyPems": [],
+    "WireGuardSubnet": ""
 }
 ```

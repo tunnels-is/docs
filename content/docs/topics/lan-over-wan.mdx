@@ -45,7 +45,7 @@ The control server handles authentication and management but does not process VP
 On your control server (10.10.0.2), run:
 
 ```bash
-./server --config
+./tunnels --config
 ```
 
 This will:
@@ -80,7 +80,7 @@ Edit the generated `config.json` to configure the control server:
 
 :::note
 
-`AdminAPIKey` and `TwoFactorKey` are auto-generated when you run `./server --config`. Keep these values in your config file.
+`AdminAPIKey` and `TwoFactorKey` are auto-generated when you run `./tunnels --config`. Keep these values in your config file.
 
 :::
 
@@ -95,7 +95,7 @@ Edit the generated `config.json` to configure the control server:
 ### 3. Start the Control Server
 
 ```bash
-./server
+./tunnels
 ```
 
 On first startup, you'll see the initial admin password printed in the logs:
@@ -131,7 +131,7 @@ VPN servers handle the actual tunnel traffic and local network access. They vali
 On each VPN server, generate certificates:
 
 ```bash
-./server --certs
+./tunnels --certs
 ```
 
 This creates `cert.pem` and `key.pem` for the VPN server.
@@ -142,12 +142,19 @@ Create `config.json` on VPN server 1:
 
 ```json
 {
-  "Features": ["AUTH", "BBOLT"],
+  "Features": ["LAN", "VPN", "BBOLT"],
   "VPNIP": "10.10.0.3",
+  "VPNPort": "444",
   "APIIP": "10.10.0.3",
   "APIPort": "443",
   "Hostname": "vpn1.tunnels.local",
   "SecretStore": "config",
+  "StartPort": 2000,
+  "EndPort": 65530,
+  "ServerBandwidthMbps": 1000,
+  "UserBandwidthMbps": 10,
+  "InternetAccess": true,
+  "LocalNetworkAccess": false,
   "Routes": [
     {
       "Address": "10.0.0.0/16",
@@ -167,7 +174,9 @@ Create `config.json` on VPN server 1:
 **Key configuration points:**
 
 ```md
-- `VPNIP`: The server's IP used for VPN traffic
+- `Features`: Enable `LAN`, `VPN`, and `BBOLT` on VPN servers (not `AUTH` — authentication is handled by the control server)
+- `VPNIP`: The server's IP used for VPN traffic and the iptables RST DROP rule
+- `VPNPort`: UDP port for the VPN data socket (default: 444)
 - `SignPem`: Points to the control server's certificate (copied earlier)
 - `Routes`: Network routes pushed to clients on connection (e.g., your LAN range)
 ```
@@ -178,12 +187,19 @@ Create `config.json` on VPN server 2 with similar settings, adjusting IPs:
 
 ```json
 {
-  "Features": ["AUTH", "BBOLT"],
+  "Features": ["LAN", "VPN", "BBOLT"],
   "VPNIP": "10.11.0.3",
+  "VPNPort": "444",
   "APIIP": "10.11.0.3",
   "APIPort": "443",
   "Hostname": "vpn2.tunnels.local",
   "SecretStore": "config",
+  "StartPort": 2000,
+  "EndPort": 65530,
+  "ServerBandwidthMbps": 1000,
+  "UserBandwidthMbps": 10,
+  "InternetAccess": true,
+  "LocalNetworkAccess": false,
   "Routes": [
     {
       "Address": "10.1.0.0/16",
@@ -227,7 +243,7 @@ Do not forget to follow the iptables setup in the server configuration if your s
 Start each VPN server:
 
 ```bash
-./server
+./tunnels
 ```
 
 The VPN servers will start listening for connections but won't handle authentication directly - they'll validate signatures from the control server.
